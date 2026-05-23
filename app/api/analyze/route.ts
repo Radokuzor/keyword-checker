@@ -44,21 +44,38 @@ export async function POST(req: NextRequest) {
 
     // Server-side credit check for paid users
     if (email && typeof email === "string") {
+      const normalizedEmail = email.toLowerCase().trim();
+
       const { data: user } = await supabase
         .from("user_credits")
-        .select("credits")
-        .eq("email", email.toLowerCase().trim())
+        .select("credits, plan, daily_used, daily_reset_date")
+        .eq("email", normalizedEmail)
         .single();
 
       if (!user || user.credits <= 0) {
         return NextResponse.json({ error: "No credits remaining" }, { status: 402 });
       }
 
-      // Deduct 1 credit before running the analysis
+      // 200/day cap for unlimited plan
+      const today = new Date().toISOString().slice(0, 10);
+      const dailyUsed = user.daily_reset_date === today ? (user.daily_used ?? 0) : 0;
+
+      if (user.plan === "unlimited" && dailyUsed >= 200) {
+        return NextResponse.json(
+          { error: "Daily limit of 200 searches reached. Try again tomorrow." },
+          { status: 429 }
+        );
+      }
+
       await supabase
         .from("user_credits")
-        .update({ credits: user.credits - 1, updated_at: new Date().toISOString() })
-        .eq("email", email.toLowerCase().trim());
+        .update({
+          credits: user.credits - 1,
+          daily_used: dailyUsed + 1,
+          daily_reset_date: today,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("email", normalizedEmail);
     }
 
     const trimmed = keyword.trim().slice(0, 200);
@@ -84,10 +101,7 @@ export async function POST(req: NextRequest) {
     console.error("[analyze]", err);
 
     if (err instanceof SyntaxError) {
-      return NextResponse.json(
-        { error: "Failed to parse AI response" },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 502 });
     }
 
     return NextResponse.json(

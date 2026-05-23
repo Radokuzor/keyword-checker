@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { setStoredEmail } from "@/lib/searchLimit";
@@ -12,7 +13,7 @@ const PLAN_LABELS: Record<string, string> = {
   unlimited: "Unlimited — 500 searches",
 };
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<Status>("loading");
@@ -41,7 +42,7 @@ export default function SuccessPage() {
   }, [searchParams, router]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-[#0a0a0a]">
+    <>
       {status === "loading" && (
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-[#5e6ad2] border-t-transparent animate-spin" />
@@ -93,6 +94,23 @@ export default function SuccessPage() {
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-[#0a0a0a]">
+      <Suspense
+        fallback={
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 rounded-full border-2 border-[#5e6ad2] border-t-transparent animate-spin" />
+            <p className="text-[14px] text-[#6b6b6b]">Loading…</p>
+          </div>
+        }
+      >
+        <SuccessContent />
+      </Suspense>
     </div>
   );
 }

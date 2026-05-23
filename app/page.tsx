@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SearchInput from "@/components/SearchInput";
 import BulkInput from "@/components/BulkInput";
 import ResultCards from "@/components/KeywordCard";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
 import PaywallOverlay from "@/components/PaywallOverlay";
+import AuthModal from "@/components/AuthModal";
 import type { KeywordData } from "@/lib/types";
 import {
   FREE_SEARCH_LIMIT,
   getSearchesUsed,
   incrementSearchesUsed,
   getStoredEmail,
+  setStoredEmail,
 } from "@/lib/searchLimit";
+import { supabaseBrowser } from "@/lib/supabase-browser";
+import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
   const [data, setData] = useState<KeywordData | null>(null);
@@ -22,19 +26,67 @@ export default function Home() {
   const [bulkMode, setBulkMode] = useState(false);
   const [sidebarKeywords, setSidebarKeywords] = useState<string[]>([]);
 
-  // Paywall state
+  // Paywall + auth state
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [searchesUsed, setSearchesUsed] = useState(0);
-  const [storedEmail, setStoredEmailState] = useState<string | null>(null);
+
+  // Auth session
+  const [session, setSession] = useState<Session | null>(null);
+  const [credits, setCredits] = useState<number | null>(null);
+
+  const effectiveEmail = session?.user?.email ?? getStoredEmail();
+
+  const fetchCredits = useCallback(async (email: string) => {
+    try {
+      const res = await fetch(`/api/credits?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const body = await res.json();
+        setCredits(body.credits ?? 0);
+      }
+    } catch {
+      // non-critical
+    }
+  }, []);
 
   useEffect(() => {
     setSearchesUsed(getSearchesUsed());
-    setStoredEmailState(getStoredEmail());
-  }, []);
+
+    // Restore Supabase session on load
+    supabaseBrowser.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setSession(data.session);
+        const email = data.session.user?.email;
+        if (email) {
+          setStoredEmail(email);
+          fetchCredits(email);
+        }
+      } else {
+        // Fallback: localStorage email from prior purchase
+        const lsEmail = getStoredEmail();
+        if (lsEmail) fetchCredits(lsEmail);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabaseBrowser.auth.onAuthStateChange((_event, sess) => {
+      setSession(sess);
+      const email = sess?.user?.email;
+      if (email) {
+        setStoredEmail(email);
+        fetchCredits(email);
+      } else if (!sess) {
+        setCredits(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [fetchCredits]);
 
   async function handleSearch(query: string) {
-    const email = getStoredEmail();
+    const email = session?.user?.email ?? getStoredEmail();
 
     // Gate: free limit exceeded and no paid account
     if (searchesUsed >= FREE_SEARCH_LIMIT && !email) {
@@ -55,9 +107,13 @@ export default function Home() {
       });
 
       if (res.status === 402) {
-        // Server says no credits — show paywall
         setShowPaywall(true);
         return;
+      }
+
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Daily search limit reached. Try again tomorrow.");
       }
 
       if (!res.ok) {
@@ -68,10 +124,12 @@ export default function Home() {
       const result: KeywordData = await res.json();
       setData(result);
 
-      // Deduct free search if no paid account
       if (!email) {
         incrementSearchesUsed();
         setSearchesUsed(getSearchesUsed());
+      } else {
+        // Refresh credit count after deduction
+        fetchCredits(email);
       }
 
       if (!bulkMode) setSidebarKeywords(result.recommended);
@@ -97,6 +155,13 @@ export default function Home() {
     }
   }
 
+  async function handleSignOut() {
+    await supabaseBrowser.auth.signOut();
+    localStorage.removeItem("kiq_email");
+    setSession(null);
+    setCredits(null);
+  }
+
   function handleBulkSubmit(keywords: string[]) {
     setBulkMode(true);
     setSidebarKeywords(keywords);
@@ -116,7 +181,7 @@ export default function Home() {
     setShowPaywall(false);
   }
 
-  const hasPaidAccount = !!storedEmail;
+  const hasPaidAccount = !!effectiveEmail;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -134,19 +199,49 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Free search indicator */}
-        {!hasPaidAccount && (
-          <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                searchesUsed >= FREE_SEARCH_LIMIT ? "bg-[#e5534b]" : "bg-[#4caf6e]"
-              }`}
-            />
-            {searchesUsed >= FREE_SEARCH_LIMIT
-              ? "Free search used"
-              : `${FREE_SEARCH_LIMIT - searchesUsed} free search remaining`}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {hasPaidAccount ? (
+            <>
+              {credits !== null && (
+                <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      credits > 0 ? "bg-[#4caf6e]" : "bg-[#e5534b]"
+                    }`}
+                  />
+                  {credits} credit{credits !== 1 ? "s" : ""} remaining
+                </div>
+              )}
+              {session && (
+                <button
+                  onClick={handleSignOut}
+                  className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
+                >
+                  Sign out
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    searchesUsed >= FREE_SEARCH_LIMIT ? "bg-[#e5534b]" : "bg-[#4caf6e]"
+                  }`}
+                />
+                {searchesUsed >= FREE_SEARCH_LIMIT
+                  ? "Free search used"
+                  : `${FREE_SEARCH_LIMIT - searchesUsed} free search remaining`}
+              </div>
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
+              >
+                Sign in
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Main */}
@@ -357,6 +452,9 @@ export default function Home() {
           Powered by AI · Data is estimated and for strategic guidance only
         </p>
       </footer>
+
+      {/* Auth modal */}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   );
 }
