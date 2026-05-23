@@ -10,9 +10,9 @@ import { setStoredEmail } from "@/lib/searchLimit";
 type Status = "loading" | "success" | "error";
 
 const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter — 20 searches",
-  pro: "Pro — 100 searches",
-  unlimited: "Unlimited — 500 searches",
+  starter: "Starter — 500 searches/month",
+  pro: "Pro — 5,000 searches/month",
+  unlimited: "Unlimited — 1,000 searches/day",
 };
 
 function SuccessContent() {

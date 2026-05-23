@@ -56,13 +56,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No credits remaining" }, { status: 402 });
       }
 
-      // 200/day cap for unlimited plan
+      // 1,000/day cap for unlimited plan
       const today = new Date().toISOString().slice(0, 10);
       const dailyUsed = user.daily_reset_date === today ? (user.daily_used ?? 0) : 0;
 
-      if (user.plan === "unlimited" && dailyUsed >= 200) {
+      if (user.plan === "unlimited" && dailyUsed >= 1000) {
         return NextResponse.json(
-          { error: "Daily limit of 200 searches reached. Try again tomorrow." },
+          { error: "Daily limit of 1,000 searches reached. Try again tomorrow." },
           { status: 429 }
         );
       }

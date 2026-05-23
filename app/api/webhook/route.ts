@@ -4,6 +4,24 @@ import { supabase } from "@/lib/supabase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+const PLAN_CREDITS: Record<string, number> = {
+  starter: 500,
+  pro: 5000,
+  unlimited: 999999,
+};
+
+async function upsertCredits(email: string, planId: string, credits: number) {
+  const normalizedEmail = email.toLowerCase().trim();
+  await supabase.from("user_credits").upsert({
+    email: normalizedEmail,
+    credits,
+    plan: planId,
+    daily_used: 0,
+    daily_reset_date: new Date().toISOString().slice(0, 10),
+    updated_at: new Date().toISOString(),
+  });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -20,6 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  // Initial subscription purchase
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
 
@@ -27,10 +46,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const email =
-      session.customer_email ??
-      session.customer_details?.email ??
-      null;
+    const email = session.customer_email ?? session.customer_details?.email ?? null;
     const planId = session.metadata?.planId;
     const credits = parseInt(session.metadata?.credits ?? "0", 10);
 
@@ -39,23 +55,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    await upsertCredits(email, planId, credits);
+  }
 
-    // Upsert: add credits if user already exists (stacked purchases), insert if new
-    const { data: existing } = await supabase
-      .from("user_credits")
-      .select("credits")
-      .eq("email", normalizedEmail)
-      .single();
+  // Monthly renewal — reset credits to full allowance for the plan
+  if (event.type === "invoice.payment_succeeded") {
+    const invoice = event.data.object as Stripe.Invoice;
 
-    const newCredits = existing ? existing.credits + credits : credits;
+    // Skip the first invoice (already handled by checkout.session.completed)
+    if ((invoice as any).billing_reason === "subscription_create") {
+      return NextResponse.json({ received: true });
+    }
 
-    await supabase.from("user_credits").upsert({
-      email: normalizedEmail,
-      credits: newCredits,
-      plan: planId,
-      updated_at: new Date().toISOString(),
-    });
+    const subscriptionId = typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : invoice.subscription?.id;
+
+    if (!subscriptionId) return NextResponse.json({ received: true });
+
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const planId = subscription.metadata?.planId;
+    const email = typeof invoice.customer_email === "string"
+      ? invoice.customer_email
+      : null;
+
+    if (!email || !planId || !PLAN_CREDITS[planId]) {
+      console.error("[webhook] renewal missing data", invoice.id);
+      return NextResponse.json({ received: true });
+    }
+
+    await upsertCredits(email, planId, PLAN_CREDITS[planId]);
   }
 
   return NextResponse.json({ received: true });

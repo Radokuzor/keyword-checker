@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const PLAN_CREDITS: Record<string, number> = {
-  starter: 20,
-  pro: 100,
-  unlimited: 500,
+  starter: 500,
+  pro: 5000,
+  unlimited: 999999,
 };
 
 const PRICE_IDS: Record<string, string> = {
@@ -29,10 +29,12 @@ export async function POST(req: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [{ price: PRICE_IDS[planId], quantity: 1 }],
-      mode: "payment",
+      mode: "subscription",
       success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/`,
+      // metadata on both session (for GET confirmation) and subscription (for renewal webhook)
       metadata: { planId, credits: String(PLAN_CREDITS[planId]) },
+      subscription_data: { metadata: { planId, credits: String(PLAN_CREDITS[planId]) } },
     });
 
     return NextResponse.json({ url: session.url });
