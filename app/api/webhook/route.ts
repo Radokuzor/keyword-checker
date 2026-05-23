@@ -63,13 +63,12 @@ export async function POST(req: NextRequest) {
     const invoice = event.data.object as Stripe.Invoice;
 
     // Skip the first invoice (already handled by checkout.session.completed)
-    if ((invoice as any).billing_reason === "subscription_create") {
+    if (invoice.billing_reason === "subscription_create") {
       return NextResponse.json({ received: true });
     }
 
-    const subscriptionId = typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : invoice.subscription?.id;
+    const sub = invoice.parent?.subscription_details?.subscription;
+    const subscriptionId = typeof sub === "string" ? sub : sub?.id;
 
     if (!subscriptionId) return NextResponse.json({ received: true });
 
