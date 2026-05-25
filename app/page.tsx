@@ -266,9 +266,9 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { id: "starter", name: "Starter", price: "$5", searches: "20 searches", note: "One-time" },
-                { id: "pro", name: "Pro", price: "$12.99", searches: "100 searches", note: "One-time", highlighted: true },
-                { id: "unlimited", name: "Unlimited", price: "$25", searches: "500 searches", note: "One-time" },
+                { id: "starter", name: "Starter", price: "$5.99", searches: "500 searches", note: "per month" },
+                { id: "pro", name: "Pro", price: "$15.99", searches: "5,000 searches", note: "per month", highlighted: true },
+                { id: "unlimited", name: "Unlimited", price: "$25.99", searches: "Unlimited", note: "1,000/day · per month" },
               ].map((plan) => (
                 <button
                   key={plan.id}
@@ -298,7 +298,7 @@ export default function Home() {
               ))}
             </div>
             <p className="mt-4 text-center text-[11px] text-[#3a3a3a]">
-              Secure payment via Stripe · No subscription
+              Secure payment via Stripe · Cancel anytime
             </p>
             <button
               onClick={() => setShowPaywall(false)}
