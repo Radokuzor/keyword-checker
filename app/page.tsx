@@ -5,13 +5,9 @@ import SearchInput from "@/components/SearchInput";
 import BulkInput from "@/components/BulkInput";
 import ResultCards from "@/components/KeywordCard";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
-import PaywallOverlay from "@/components/PaywallOverlay";
 import AuthModal from "@/components/AuthModal";
 import type { KeywordData } from "@/lib/types";
 import {
-  FREE_SEARCH_LIMIT,
-  getSearchesUsed,
-  incrementSearchesUsed,
   getStoredEmail,
   setStoredEmail,
 } from "@/lib/searchLimit";
@@ -26,11 +22,8 @@ export default function Home() {
   const [bulkMode, setBulkMode] = useState(false);
   const [sidebarKeywords, setSidebarKeywords] = useState<string[]>([]);
 
-  // Paywall + auth state
-  const [showPaywall, setShowPaywall] = useState(false);
+  // Auth state
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [searchesUsed, setSearchesUsed] = useState(0);
 
   // Auth session
   const [session, setSession] = useState<Session | null>(null);
@@ -51,8 +44,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setSearchesUsed(getSearchesUsed());
-
     // Restore Supabase session on load
     supabaseBrowser.auth.getSession().then(({ data }) => {
       if (data.session) {
@@ -88,15 +79,8 @@ export default function Home() {
   async function handleSearch(query: string) {
     const email = session?.user?.email ?? getStoredEmail();
 
-    // Gate: free limit exceeded and no paid account
-    if (searchesUsed >= FREE_SEARCH_LIMIT && !email) {
-      setShowPaywall(true);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
-    setShowPaywall(false);
     setActiveKeyword(query);
 
     try {
@@ -105,11 +89,6 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyword: query, email }),
       });
-
-      if (res.status === 402) {
-        setShowPaywall(true);
-        return;
-      }
 
       if (res.status === 429) {
         const body = await res.json().catch(() => ({}));
@@ -124,11 +103,7 @@ export default function Home() {
       const result: KeywordData = await res.json();
       setData(result);
 
-      if (!email) {
-        incrementSearchesUsed();
-        setSearchesUsed(getSearchesUsed());
-      } else {
-        // Refresh credit count after deduction
+      if (email) {
         fetchCredits(email);
       }
 
@@ -140,22 +115,7 @@ export default function Home() {
     }
   }
 
-  async function handleSelectPlan(planId: string) {
-    setCheckoutLoading(true);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-      const { url } = await res.json();
-      if (url) window.location.href = url;
-    } catch {
-      setCheckoutLoading(false);
-    }
-  }
-
-  async function handleSignOut() {
+async function handleSignOut() {
     await supabaseBrowser.auth.signOut();
     localStorage.removeItem("kiq_email");
     setSession(null);
@@ -178,7 +138,6 @@ export default function Home() {
     setData(null);
     setError(null);
     setActiveKeyword("");
-    setShowPaywall(false);
   }
 
   const hasPaidAccount = !!effectiveEmail;
@@ -222,24 +181,12 @@ export default function Home() {
               )}
             </>
           ) : (
-            <>
-              <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    searchesUsed >= FREE_SEARCH_LIMIT ? "bg-[#e5534b]" : "bg-[#4caf6e]"
-                  }`}
-                />
-                {searchesUsed >= FREE_SEARCH_LIMIT
-                  ? "Free search used"
-                  : `${FREE_SEARCH_LIMIT - searchesUsed} free search remaining`}
-              </div>
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
-              >
-                Sign in
-              </button>
-            </>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Sign in
+            </button>
           )}
         </div>
       </header>
@@ -247,70 +194,8 @@ export default function Home() {
       {/* Main */}
       <main className="flex flex-1 flex-col items-center px-4 py-16 sm:py-24">
 
-        {/* Standalone paywall — shown when paywall is triggered but no results exist yet */}
-        {showPaywall && !data && !isLoading && (
-          <div className="w-full max-w-lg">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#5e6ad215] border border-[#5e6ad230] mb-3">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#5e6ad2" strokeWidth="1.5" />
-                  <path d="M5 7V5a3 3 0 016 0v2" stroke="#5e6ad2" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </div>
-              <h2 className="text-[20px] font-semibold text-[#ededed] tracking-tight">
-                You&apos;ve used your free search
-              </h2>
-              <p className="mt-1.5 text-[13px] text-[#6b6b6b]">
-                Get more searches to continue your research
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { id: "starter", name: "Starter", price: "$5.99", searches: "500 searches", note: "per month" },
-                { id: "pro", name: "Pro", price: "$15.99", searches: "5,000 searches", note: "per month", highlighted: true },
-                { id: "unlimited", name: "Unlimited", price: "$25.99", searches: "Unlimited", note: "1,000/day · per month" },
-              ].map((plan) => (
-                <button
-                  key={plan.id}
-                  onClick={() => handleSelectPlan(plan.id)}
-                  disabled={checkoutLoading}
-                  className={`relative flex flex-col rounded-xl border p-4 text-left transition-all disabled:opacity-60 cursor-pointer ${
-                    plan.highlighted
-                      ? "border-[#5e6ad2] bg-[#5e6ad210] hover:bg-[#5e6ad218]"
-                      : "border-[#252525] bg-[#111111] hover:border-[#353535]"
-                  }`}
-                >
-                  {plan.highlighted && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#5e6ad2] px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider whitespace-nowrap">
-                      Popular
-                    </span>
-                  )}
-                  <p className="text-[10px] uppercase tracking-widest text-[#6b6b6b] font-medium">{plan.name}</p>
-                  <p className="mt-2 text-[26px] font-semibold text-[#ededed] leading-none">{plan.price}</p>
-                  <p className="mt-2 text-[12px] font-medium text-[#ededed]">{plan.searches}</p>
-                  <p className="mt-1 text-[11px] text-[#6b6b6b]">{plan.note}</p>
-                  <div className={`mt-3 rounded-lg py-1.5 text-center text-[12px] font-medium ${
-                    plan.highlighted ? "bg-[#5e6ad2] text-white" : "bg-[#1a1a1a] text-[#ededed]"
-                  }`}>
-                    {checkoutLoading ? "..." : "Get started →"}
-                  </div>
-                </button>
-              ))}
-            </div>
-            <p className="mt-4 text-center text-[11px] text-[#3a3a3a]">
-              Secure payment via Stripe · Cancel anytime
-            </p>
-            <button
-              onClick={() => setShowPaywall(false)}
-              className="mt-4 block mx-auto text-[12px] text-[#3a3a3a] hover:text-[#6b6b6b] transition-colors"
-            >
-              ← Back to search
-            </button>
-          </div>
-        )}
-
-        {/* Hero — only before first search and not in paywall */}
-        {!data && !isLoading && !bulkMode && !showPaywall && (
+        {/* Hero — only before first search */}
+        {!data && !isLoading && !bulkMode && (
           <div className="mb-10 text-center">
             <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-tight text-[#ededed] leading-tight">
               Keyword intelligence,
@@ -325,8 +210,8 @@ export default function Home() {
         )}
 
         {/* Input area */}
-        {!showPaywall && (
-          <>
+        <>
+
             {bulkMode && !data && !isLoading ? (
               <BulkInput onSubmit={handleBulkSubmit} onClose={exitBulkMode} />
             ) : !bulkMode ? (
@@ -353,8 +238,7 @@ export default function Home() {
                 </button>
               </div>
             )}
-          </>
-        )}
+        </>
 
         {/* Error state */}
         {error && !isLoading && (
@@ -409,27 +293,11 @@ export default function Home() {
               <span className="rounded-full border border-[#252525] bg-[#111111] px-3 py-1 text-[13px] font-medium text-[#ededed]">
                 {data.keyword}
               </span>
-              {showPaywall && (
-                <span className="ml-auto text-[12px] text-[#6b6b6b]">
-                  Upgrade to search more keywords
-                </span>
-              )}
             </div>
 
             <div className="flex flex-col lg:flex-row-reverse lg:items-start lg:gap-6">
-              {/* Cards — blurred when paywall is active */}
               <div className="flex-1 min-w-0">
-                <div className="relative">
-                  <div className={showPaywall ? "blur-sm pointer-events-none select-none" : ""}>
-                    <ResultCards data={data} />
-                  </div>
-                  {showPaywall && (
-                    <PaywallOverlay
-                      onSelectPlan={handleSelectPlan}
-                      isLoading={checkoutLoading}
-                    />
-                  )}
-                </div>
+                <ResultCards data={data} />
               </div>
 
               {/* Sidebar */}
@@ -437,7 +305,7 @@ export default function Home() {
                 <RecommendedKeywords
                   keywords={sidebarKeywords}
                   activeKeyword={activeKeyword}
-                  onSelect={showPaywall ? () => setShowPaywall(true) : handleSidebarClick}
+                  onSelect={handleSidebarClick}
                   label={bulkMode ? "Your Keywords" : "Related Keywords"}
                 />
               </div>
