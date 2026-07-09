@@ -41,7 +41,7 @@ Return ONLY valid JSON — no markdown, no explanation, no code fences. The JSON
 
 Difficulty label rules: 0-34 = Easy, 35-59 = Medium, 60-79 = Hard, 80-100 = Very Hard.`;
 
-// Focused prompt — used when real DataForSEO data is available; Claude only handles intent + cta
+// Focused prompt — used when real DataForSEO data is available; Claude handles intent, cta, and recommended keywords
 const ANALYSIS_PROMPT = `You are an SEO strategist. You will be given a keyword and its real search data.
 Return ONLY valid JSON — no markdown, no explanation, no code fences:
 
@@ -53,56 +53,33 @@ Return ONLY valid JSON — no markdown, no explanation, no code fences:
   "cta": {
     "advice": <3-5 sentences: content type to create, how to structure it, backlink approach, one quick win — specific to this keyword, not generic>,
     "timeToRank": <based on difficulty: 0-34 → "1–3 months", 35-59 → "3–6 months", 60-79 → "6–12 months", 80-100 → "12–24 months">
-  }
+  },
+  "recommended": [<5 closely related keywords as strings, ordered by relevance>]
 }
 
 Rules: High CPC signals commercial/transactional intent. Be specific — the user wants real advice.`;
 
 export async function POST(req: NextRequest) {
   try {
-    const { keyword, email } = await req.json();
+    const { keyword, email, anonId } = await req.json();
 
     if (!keyword || typeof keyword !== "string" || keyword.trim().length === 0) {
       return NextResponse.json({ error: "keyword is required" }, { status: 400 });
     }
 
-    // Server-side credit check for paid users
-    if (email && typeof email === "string") {
-      const normalizedEmail = email.toLowerCase().trim();
-
-      const { data: user } = await supabase
-        .from("user_credits")
-        .select("credits, plan, daily_used, daily_reset_date")
-        .eq("email", normalizedEmail)
-        .single();
-
-      if (!user || user.credits <= 0) {
-        return NextResponse.json({ error: "No credits remaining" }, { status: 402 });
-      }
-
-      // 1,000/day cap for unlimited plan
-      const today = new Date().toISOString().slice(0, 10);
-      const dailyUsed = user.daily_reset_date === today ? (user.daily_used ?? 0) : 0;
-
-      if (user.plan === "unlimited" && dailyUsed >= 1000) {
-        return NextResponse.json(
-          { error: "Daily limit of 1,000 searches reached. Try again tomorrow." },
-          { status: 429 }
-        );
-      }
-
-      await supabase
-        .from("user_credits")
-        .update({
-          credits: user.credits - 1,
-          daily_used: dailyUsed + 1,
-          daily_reset_date: today,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("email", normalizedEmail);
-    }
-
     const trimmed = keyword.trim().slice(0, 200);
+
+    // Log search non-blocking — never fails the request
+    supabase
+      .from("search_logs")
+      .insert({
+        email: email && typeof email === "string" ? email.toLowerCase().trim() : null,
+        anon_id: !email && anonId && typeof anonId === "string" ? anonId : null,
+        keyword: trimmed,
+      })
+      .then(({ error }) => {
+        if (error) console.error("[search_logs]", error.message);
+      });
 
     // Try DataForSEO first for real metrics
     const dfsResult = await fetchDataForSEO(trimmed);
@@ -133,7 +110,7 @@ export async function POST(req: NextRequest) {
         cpc: { usd: dfsResult.cpcUsd },
         intent: analysis.intent,
         cta: analysis.cta,
-        recommended: dfsResult.recommendedKeywords,
+        recommended: analysis.recommended ?? [],
       };
     } else {
       // Fallback — Claude estimates everything (DataForSEO unavailable or failed)

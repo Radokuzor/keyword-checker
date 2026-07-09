@@ -7,7 +7,6 @@ export interface DataForSEOResult {
   monthlyVolume: number;
   trend: VolumeTrend;
   cpcUsd: number;
-  recommendedKeywords: string[];
 }
 
 function deriveDifficultyLabel(score: number): DifficultyLabel {
@@ -52,23 +51,14 @@ export async function fetchDataForSEO(
   ]);
 
   try {
-    const volController = new AbortController();
-    const ideasController = new AbortController();
-    const volTimeout = setTimeout(() => volController.abort(), 12000);
-    const ideasTimeout = setTimeout(() => ideasController.abort(), 12000);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
 
-    const [volumeRes, ideasRes] = await Promise.all([
-      fetch(
-        "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live",
-        { method: "POST", headers, body, signal: volController.signal }
-      ),
-      fetch(
-        "https://api.dataforseo.com/v3/keywords_data/google_ads/keywords_for_keywords/live",
-        { method: "POST", headers, body, signal: ideasController.signal }
-      ),
-    ]);
-    clearTimeout(volTimeout);
-    clearTimeout(ideasTimeout);
+    const volumeRes = await fetch(
+      "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live",
+      { method: "POST", headers, body, signal: controller.signal }
+    );
+    clearTimeout(timeout);
 
     if (!volumeRes.ok) return null;
 
@@ -83,15 +73,6 @@ export async function fetchDataForSEO(
       Math.max(0, Math.round(item.competition_index ?? 50))
     );
 
-    let recommendedKeywords: string[] = [];
-    if (ideasRes.ok) {
-      const ideasJson = await ideasRes.json();
-      recommendedKeywords = (ideasJson?.tasks?.[0]?.result ?? [])
-        .map((r: { keyword: string }) => r.keyword)
-        .filter((k: string) => k !== keyword)
-        .slice(0, 5);
-    }
-
     return {
       keyword: item.keyword ?? keyword,
       difficultyScore,
@@ -99,7 +80,6 @@ export async function fetchDataForSEO(
       monthlyVolume: item.search_volume ?? 0,
       trend: deriveTrend(item.monthly_searches ?? []),
       cpcUsd: Math.round((item.cpc ?? 0) * 100) / 100,
-      recommendedKeywords,
     };
   } catch (err) {
     console.error("[dataforseo]", err);

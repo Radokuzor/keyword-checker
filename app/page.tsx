@@ -11,6 +11,7 @@ import {
   getStoredEmail,
   setStoredEmail,
 } from "@/lib/searchLimit";
+import { getAnonId } from "@/lib/anonId";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import type { Session } from "@supabase/supabase-js";
 
@@ -78,6 +79,7 @@ export default function Home() {
 
   async function handleSearch(query: string) {
     const email = session?.user?.email ?? getStoredEmail();
+    const anonId = !email ? getAnonId() : undefined;
 
     setIsLoading(true);
     setError(null);
@@ -87,7 +89,7 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword: query, email }),
+        body: JSON.stringify({ keyword: query, email, anonId }),
       });
 
       if (res.status === 429) {
