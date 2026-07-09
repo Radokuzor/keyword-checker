@@ -74,10 +74,10 @@ export default function AuthModal({ onClose, anonId }: AuthModalProps) {
         ) : (
           <>
             <h2 className="text-[17px] font-semibold text-[#ededed] tracking-tight">
-              Sign in to KeywordIQ
+              Sign in or create account
             </h2>
             <p className="mt-1.5 text-[13px] text-[#6b6b6b]">
-              Get a magic link — no password required. Access your credits on any device.
+              Enter your email and we&apos;ll send you a secure link to login to your account.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3">
@@ -103,7 +103,7 @@ export default function AuthModal({ onClose, anonId }: AuthModalProps) {
             </form>
 
             <p className="mt-4 text-center text-[11px] text-[#3a3a3a]">
-              Use the email you checked out with to restore existing credits.
+              Already have credits? Use the same email to restore them.
             </p>
           </>
         )}

@@ -7,7 +7,7 @@ import ResultCards from "@/components/KeywordCard";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
 import AuthModal from "@/components/AuthModal";
 import ArticleCard, { type Article } from "@/components/ArticleCard";
-import ArticleGenerating from "@/components/ArticleGenerating";
+import ArticleGenerating, { CyclingLoader } from "@/components/ArticleGenerating";
 import type { KeywordData } from "@/lib/types";
 import {
   getStoredEmail,
@@ -238,7 +238,7 @@ async function handleSignOut() {
               onClick={() => setShowAuthModal(true)}
               className="rounded-lg bg-[#5e6ad2] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#6b77e0] active:scale-95 transition-all"
             >
-              Sign in
+              Sign in / Sign up
             </button>
           )}
         </div>
@@ -305,24 +305,23 @@ async function handleSignOut() {
           </div>
         )}
 
-        {/* Loading skeleton */}
+        {/* Loading state */}
         {isLoading && (
           <div className="mt-10 w-full max-w-5xl">
             <div className="flex flex-col lg:flex-row-reverse lg:items-start lg:gap-6">
-              <div className="flex-1 min-w-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={`rounded-xl border border-[#252525] bg-[#111111] p-5 h-[140px] animate-pulse ${
-                        i === 4 ? "sm:col-span-2 lg:col-span-2" : ""
-                      }`}
-                    >
-                      <div className="h-2.5 w-24 rounded bg-[#1f1f1f] mb-3" />
-                      <div className="h-7 w-20 rounded bg-[#1f1f1f]" />
-                    </div>
-                  ))}
-                </div>
+              <div className="flex-1 min-w-0 flex items-center justify-center py-16">
+                <CyclingLoader
+                  messages={[
+                    "Fetching search data…",
+                    "Analyzing keyword difficulty…",
+                    "Estimating monthly volume…",
+                    "Detecting search intent…",
+                    "Calculating cost per click…",
+                    "Writing your ranking plan…",
+                    "Finding related keywords…",
+                  ]}
+                  duration={20}
+                />
               </div>
               {bulkMode && sidebarKeywords.length > 0 && (
                 <div className="mt-6 lg:mt-0 lg:w-[260px] lg:shrink-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
