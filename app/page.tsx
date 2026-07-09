@@ -6,6 +6,7 @@ import BulkInput from "@/components/BulkInput";
 import ResultCards from "@/components/KeywordCard";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
 import AuthModal from "@/components/AuthModal";
+import ArticleCard, { type Article } from "@/components/ArticleCard";
 import type { KeywordData } from "@/lib/types";
 import {
   getStoredEmail,
@@ -25,6 +26,12 @@ export default function Home() {
 
   // Auth state
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Article state
+  const [article, setArticle] = useState<Article | null>(null);
+  const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
+  // Held when user clicks Create Article before signing in
+  const [pendingArticle, setPendingArticle] = useState<{ keyword: string; advice: string } | null>(null);
 
   // Auth session
   const [session, setSession] = useState<Session | null>(null);
@@ -53,6 +60,7 @@ export default function Home() {
         if (email) {
           setStoredEmail(email);
           fetchCredits(email);
+          fetchPendingArticle(email);
         }
       } else {
         // Fallback: localStorage email from prior purchase
@@ -69,6 +77,16 @@ export default function Home() {
       if (email) {
         setStoredEmail(email);
         fetchCredits(email);
+        // If user just signed in with a pending article intent, generate it now
+        setPendingArticle((pending) => {
+          if (pending) {
+            generateArticle(pending.keyword, pending.advice, email);
+          } else {
+            // Otherwise check if they have a previously generated pending article
+            fetchPendingArticle(email);
+          }
+          return null;
+        });
       } else if (!sess) {
         setCredits(null);
       }
@@ -123,6 +141,51 @@ async function handleSignOut() {
     setSession(null);
     setCredits(null);
   }
+
+  async function generateArticle(keyword: string, advice: string, email?: string) {
+    setIsGeneratingArticle(true);
+    try {
+      const anonId = getAnonId();
+      const res = await fetch("/api/generate-article", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword, advice, anonId, email }),
+      });
+      if (!res.ok) return;
+      const result = await res.json();
+      setArticle(result);
+    } finally {
+      setIsGeneratingArticle(false);
+      setPendingArticle(null);
+    }
+  }
+
+  function handleCreateArticle() {
+    if (!data) return;
+    const { keyword, cta } = data;
+    const email = session?.user?.email ?? undefined;
+
+    if (!email) {
+      // Save intent and open auth modal — article generates after sign-in
+      setPendingArticle({ keyword, advice: cta.advice });
+      setShowAuthModal(true);
+      return;
+    }
+
+    generateArticle(keyword, cta.advice, email);
+  }
+
+  // Check for pending articles for this user on session restore/sign-in
+  const fetchPendingArticle = useCallback(async (email: string) => {
+    try {
+      const res = await fetch(`/api/articles?email=${encodeURIComponent(email)}`);
+      if (!res.ok) return;
+      const body = await res.json();
+      if (body.article) setArticle(body.article);
+    } catch {
+      // non-critical
+    }
+  }, []);
 
   function handleBulkSubmit(keywords: string[]) {
     setBulkMode(true);
@@ -299,7 +362,7 @@ async function handleSignOut() {
 
             <div className="flex flex-col lg:flex-row-reverse lg:items-start lg:gap-6">
               <div className="flex-1 min-w-0">
-                <ResultCards data={data} />
+                <ResultCards data={data} onCreateArticle={handleCreateArticle} />
               </div>
 
               {/* Sidebar */}
@@ -324,7 +387,27 @@ async function handleSignOut() {
       </footer>
 
       {/* Auth modal */}
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          anonId={getAnonId()}
+        />
+      )}
+
+      {/* Article generating spinner */}
+      {isGeneratingArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 rounded-full border-2 border-[#5e6ad2] border-t-transparent animate-spin" />
+            <p className="text-[13px] text-[#6b6b6b]">Generating your article…</p>
+          </div>
+        </div>
+      )}
+
+      {/* Article card */}
+      {article && !isGeneratingArticle && (
+        <ArticleCard article={article} onClose={() => setArticle(null)} />
+      )}
     </div>
   );
 }

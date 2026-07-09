@@ -5,9 +5,10 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 
 interface AuthModalProps {
   onClose: () => void;
+  anonId?: string;
 }
 
-export default function AuthModal({ onClose }: AuthModalProps) {
+export default function AuthModal({ onClose, anonId }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -19,7 +20,9 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
     const { error } = await supabaseBrowser.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback${anonId ? `?anon_id=${encodeURIComponent(anonId)}` : ""}`,
+      },
     });
 
     if (error) {

@@ -65,9 +65,10 @@ function TrendChip({ trend }: { trend: string }) {
 
 interface CardsProps {
   data: KeywordData;
+  onCreateArticle?: () => void;
 }
 
-export default function ResultCards({ data }: CardsProps) {
+export default function ResultCards({ data, onCreateArticle }: CardsProps) {
   const cardBase =
     "rounded-xl border border-[#252525] bg-[#111111] p-5 flex flex-col gap-1";
   const label = "text-[11px] uppercase tracking-widest text-[#6b6b6b] font-medium";
@@ -114,7 +115,20 @@ export default function ResultCards({ data }: CardsProps) {
 
       {/* 5 — CTA Advice */}
       <div className={`${cardBase} sm:col-span-2 lg:col-span-2`}>
-        <p className={label}>How to Rank #1</p>
+        <div className="flex items-center justify-between">
+          <p className={label}>How to Rank #1</p>
+          {onCreateArticle && (
+            <button
+              onClick={onCreateArticle}
+              className="flex items-center gap-1.5 rounded-lg bg-[#5e6ad215] border border-[#5e6ad230] px-2.5 py-1 text-[11px] font-medium text-[#5e6ad2] hover:bg-[#5e6ad225] hover:border-[#5e6ad250] transition-colors"
+            >
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Create Article
+            </button>
+          )}
+        </div>
         <div className="mt-2 flex items-center gap-2">
           <span className="rounded-full bg-[#5e6ad215] px-2.5 py-1 text-[12px] font-medium text-[#5e6ad2]">
             ⏱ {data.cta.timeToRank}

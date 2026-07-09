@@ -1,19 +1,29 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export default function AuthCallback() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Supabase handles the token exchange from the URL hash automatically.
-    // Calling getSession() ensures it's complete before we redirect.
-    supabaseBrowser.auth.getSession().then(() => {
-      router.replace("/");
+    supabaseBrowser.auth.getSession().then(({ data }) => {
+      const email = data.session?.user?.email;
+      const anonId = searchParams.get("anon_id");
+
+      if (email && anonId) {
+        fetch("/api/claim-articles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ anonId, email }),
+        }).finally(() => router.replace("/"));
+      } else {
+        router.replace("/");
+      }
     });
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
