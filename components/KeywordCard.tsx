@@ -120,7 +120,7 @@ export default function ResultCards({ data, onCreateArticle }: CardsProps) {
           {onCreateArticle && (
             <button
               onClick={onCreateArticle}
-              className="flex items-center gap-1.5 rounded-lg bg-[#5e6ad215] border border-[#5e6ad230] px-2.5 py-1 text-[11px] font-medium text-[#5e6ad2] hover:bg-[#5e6ad225] hover:border-[#5e6ad250] transition-colors"
+              className="flex items-center gap-1.5 rounded-lg bg-[#5e6ad2] px-2.5 py-1.5 text-[11px] font-medium text-white hover:bg-[#6b77e0] active:scale-95 transition-all"
             >
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
                 <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

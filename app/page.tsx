@@ -30,8 +30,6 @@ export default function Home() {
   // Article state
   const [article, setArticle] = useState<Article | null>(null);
   const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
-  // Held when user clicks Create Article before signing in
-  const [pendingArticle, setPendingArticle] = useState<{ keyword: string; advice: string } | null>(null);
 
   // Auth session
   const [session, setSession] = useState<Session | null>(null);
@@ -46,6 +44,17 @@ export default function Home() {
         const body = await res.json();
         setCredits(body.credits ?? 0);
       }
+    } catch {
+      // non-critical
+    }
+  }, []);
+
+  const fetchPendingArticle = useCallback(async (email: string) => {
+    try {
+      const res = await fetch(`/api/articles?email=${encodeURIComponent(email)}`);
+      if (!res.ok) return;
+      const body = await res.json();
+      if (body.article) setArticle(body.article);
     } catch {
       // non-critical
     }
@@ -77,23 +86,14 @@ export default function Home() {
       if (email) {
         setStoredEmail(email);
         fetchCredits(email);
-        // If user just signed in with a pending article intent, generate it now
-        setPendingArticle((pending) => {
-          if (pending) {
-            generateArticle(pending.keyword, pending.advice, email);
-          } else {
-            // Otherwise check if they have a previously generated pending article
-            fetchPendingArticle(email);
-          }
-          return null;
-        });
+        fetchPendingArticle(email);
       } else if (!sess) {
         setCredits(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchCredits]);
+  }, [fetchCredits, fetchPendingArticle]);
 
   async function handleSearch(query: string) {
     const email = session?.user?.email ?? getStoredEmail();
@@ -142,8 +142,8 @@ async function handleSignOut() {
     setCredits(null);
   }
 
-  async function generateArticle(keyword: string, advice: string, email?: string) {
-    setIsGeneratingArticle(true);
+  async function generateArticle(keyword: string, advice: string, email?: string, silent = false) {
+    if (!silent) setIsGeneratingArticle(true);
     try {
       const anonId = getAnonId();
       const res = await fetch("/api/generate-article", {
@@ -153,10 +153,9 @@ async function handleSignOut() {
       });
       if (!res.ok) return;
       const result = await res.json();
-      setArticle(result);
+      if (!silent) setArticle(result);
     } finally {
-      setIsGeneratingArticle(false);
-      setPendingArticle(null);
+      if (!silent) setIsGeneratingArticle(false);
     }
   }
 
@@ -166,26 +165,14 @@ async function handleSignOut() {
     const email = session?.user?.email ?? undefined;
 
     if (!email) {
-      // Save intent and open auth modal — article generates after sign-in
-      setPendingArticle({ keyword, advice: cta.advice });
+      // Generate silently in background with anonId — claimed after sign-in, shown via fetchPendingArticle
+      generateArticle(keyword, cta.advice, undefined, true);
       setShowAuthModal(true);
       return;
     }
 
     generateArticle(keyword, cta.advice, email);
   }
-
-  // Check for pending articles for this user on session restore/sign-in
-  const fetchPendingArticle = useCallback(async (email: string) => {
-    try {
-      const res = await fetch(`/api/articles?email=${encodeURIComponent(email)}`);
-      if (!res.ok) return;
-      const body = await res.json();
-      if (body.article) setArticle(body.article);
-    } catch {
-      // non-critical
-    }
-  }, []);
 
   function handleBulkSubmit(keywords: string[]) {
     setBulkMode(true);
@@ -248,7 +235,7 @@ async function handleSignOut() {
           ) : (
             <button
               onClick={() => setShowAuthModal(true)}
-              className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
+              className="rounded-lg bg-[#5e6ad2] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#6b77e0] active:scale-95 transition-all"
             >
               Sign in
             </button>
