@@ -7,6 +7,7 @@ import ResultCards from "@/components/KeywordCard";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
 import AuthModal from "@/components/AuthModal";
 import ArticleCard, { type Article } from "@/components/ArticleCard";
+import ArticleGenerating from "@/components/ArticleGenerating";
 import type { KeywordData } from "@/lib/types";
 import {
   getStoredEmail,
@@ -381,15 +382,8 @@ async function handleSignOut() {
         />
       )}
 
-      {/* Article generating spinner */}
-      {isGeneratingArticle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-8 rounded-full border-2 border-[#5e6ad2] border-t-transparent animate-spin" />
-            <p className="text-[13px] text-[#6b6b6b]">Generating your article…</p>
-          </div>
-        </div>
-      )}
+      {/* Article generating overlay */}
+      {isGeneratingArticle && <ArticleGenerating />}
 
       {/* Article card */}
       {article && !isGeneratingArticle && (
