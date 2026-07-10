@@ -31,14 +31,13 @@ export default function Home() {
   // Article state
   const [article, setArticle] = useState<Article | null>(null);
   const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState<(() => void) | null>(null);
 
   // Auth session
   const [session, setSession] = useState<Session | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
 
-  const effectiveEmail = session?.user?.email ?? getStoredEmail();
-
-  const fetchCredits = useCallback(async (email: string) => {
+const fetchCredits = useCallback(async (email: string) => {
     try {
       const res = await fetch(`/api/credits?email=${encodeURIComponent(email)}`);
       if (res.ok) {
@@ -187,8 +186,6 @@ async function handleSignOut() {
     setActiveKeyword("");
   }
 
-  const hasPaidAccount = !!effectiveEmail;
-
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -206,7 +203,7 @@ async function handleSignOut() {
         </div>
 
         <div className="flex items-center gap-3">
-          {hasPaidAccount ? (
+          {session ? (
             <>
               {credits !== null && (
                 <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
@@ -218,14 +215,12 @@ async function handleSignOut() {
                   {credits} credit{credits !== 1 ? "s" : ""} remaining
                 </div>
               )}
-              {session && (
-                <button
-                  onClick={handleSignOut}
-                  className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
-                >
-                  Sign out
-                </button>
-              )}
+              <button
+                onClick={handleSignOut}
+                className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
+              >
+                Sign out
+              </button>
             </>
           ) : (
             <button
@@ -370,8 +365,9 @@ async function handleSignOut() {
       {/* Auth modal */}
       {showAuthModal && (
         <AuthModal
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => { setShowAuthModal(false); setPendingDownload(null); }}
           anonId={getAnonId()}
+          onEmailSent={pendingDownload ?? undefined}
         />
       )}
 
@@ -383,11 +379,11 @@ async function handleSignOut() {
         <ArticleCard
           article={article}
           onClose={() => setArticle(null)}
-          userEmail={session?.user?.email ?? getStoredEmail() ?? undefined}
-          anonId={getAnonId()}
-          onEmailCaptured={(email: string) => {
-            setStoredEmail(email);
-            fetchCredits(email);
+          userEmail={session?.user?.email}
+          onUnauthDownload={(downloadFn) => {
+            setPendingDownload(() => downloadFn);
+            setArticle(null);
+            setShowAuthModal(true);
           }}
         />
       )}

@@ -6,9 +6,10 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 interface AuthModalProps {
   onClose: () => void;
   anonId?: string;
+  onEmailSent?: () => void;
 }
 
-export default function AuthModal({ onClose, anonId }: AuthModalProps) {
+export default function AuthModal({ onClose, anonId, onEmailSent }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -29,6 +30,7 @@ export default function AuthModal({ onClose, anonId }: AuthModalProps) {
       setErrorMsg(error.message);
       setStatus("error");
     } else {
+      onEmailSent?.();
       setStatus("sent");
     }
   }
