@@ -143,8 +143,8 @@ async function handleSignOut() {
     setCredits(null);
   }
 
-  async function generateArticle(keyword: string, advice: string, email?: string, silent = false) {
-    if (!silent) setIsGeneratingArticle(true);
+  async function generateArticle(keyword: string, advice: string, email?: string) {
+    setIsGeneratingArticle(true);
     try {
       const anonId = getAnonId();
       const res = await fetch("/api/generate-article", {
@@ -154,9 +154,11 @@ async function handleSignOut() {
       });
       if (!res.ok) return;
       const result = await res.json();
-      if (!silent) setArticle(result);
+      setArticle(result);
+    } catch {
+      // silent
     } finally {
-      if (!silent) setIsGeneratingArticle(false);
+      setIsGeneratingArticle(false);
     }
   }
 
@@ -164,14 +166,6 @@ async function handleSignOut() {
     if (!data) return;
     const { keyword, cta } = data;
     const email = session?.user?.email ?? undefined;
-
-    if (!email) {
-      // Generate silently in background with anonId — claimed after sign-in, shown via fetchPendingArticle
-      generateArticle(keyword, cta.advice, undefined, true);
-      setShowAuthModal(true);
-      return;
-    }
-
     generateArticle(keyword, cta.advice, email);
   }
 
@@ -386,7 +380,16 @@ async function handleSignOut() {
 
       {/* Article card */}
       {article && !isGeneratingArticle && (
-        <ArticleCard article={article} onClose={() => setArticle(null)} />
+        <ArticleCard
+          article={article}
+          onClose={() => setArticle(null)}
+          userEmail={session?.user?.email ?? getStoredEmail() ?? undefined}
+          anonId={getAnonId()}
+          onEmailCaptured={(email: string) => {
+            setStoredEmail(email);
+            fetchCredits(email);
+          }}
+        />
       )}
     </div>
   );

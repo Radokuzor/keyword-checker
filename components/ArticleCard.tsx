@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export interface Article {
   id: string;
   keyword: string;
@@ -10,9 +12,16 @@ export interface Article {
 interface ArticleCardProps {
   article: Article;
   onClose: () => void;
+  userEmail?: string;
+  anonId?: string;
+  onEmailCaptured?: (email: string) => void;
 }
 
-export default function ArticleCard({ article, onClose }: ArticleCardProps) {
+export default function ArticleCard({ article, onClose, userEmail, anonId, onEmailCaptured }: ArticleCardProps) {
+  const [emailGate, setEmailGate] = useState<"txt" | "html" | null>(null);
+  const [gateEmail, setGateEmail] = useState("");
+  const [gateStatus, setGateStatus] = useState<"idle" | "loading">("idle");
+
   function markSaved() {
     fetch("/api/articles", {
       method: "PATCH",
@@ -26,7 +35,7 @@ export default function ArticleCard({ article, onClose }: ArticleCardProps) {
     onClose();
   }
 
-  function downloadTxt() {
+  function triggerDownloadTxt() {
     markSaved();
     const blob = new Blob([article.plain_text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -37,7 +46,7 @@ export default function ArticleCard({ article, onClose }: ArticleCardProps) {
     URL.revokeObjectURL(url);
   }
 
-  function downloadHtml() {
+  function triggerDownloadHtml() {
     markSaved();
     const fullHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -66,6 +75,35 @@ ${article.html}
     a.download = `${article.keyword.replace(/\s+/g, "-").toLowerCase()}.html`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadClick(format: "txt" | "html") {
+    if (userEmail) {
+      format === "txt" ? triggerDownloadTxt() : triggerDownloadHtml();
+    } else {
+      setEmailGate(format);
+    }
+  }
+
+  async function handleGateSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = gateEmail.trim().toLowerCase();
+    if (!trimmed) return;
+    setGateStatus("loading");
+
+    if (anonId) {
+      await fetch("/api/claim-articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ anonId, email: trimmed }),
+      }).catch(() => {});
+    }
+
+    onEmailCaptured?.(trimmed);
+    emailGate === "txt" ? triggerDownloadTxt() : triggerDownloadHtml();
+    setEmailGate(null);
+    setGateEmail("");
+    setGateStatus("idle");
   }
 
   return (
@@ -103,20 +141,53 @@ ${article.html}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 px-6 py-4 border-t border-[#1a1a1a] shrink-0">
-          <p className="text-[12px] text-[#6b6b6b] mr-auto">Download your article</p>
-          <button
-            onClick={downloadTxt}
-            className="flex items-center gap-1.5 rounded-lg border border-[#252525] bg-[#0a0a0a] px-3.5 py-2 text-[12px] font-medium text-[#ededed] hover:border-[#5e6ad2] hover:text-[#5e6ad2] transition-colors"
-          >
-            Plain text (.txt)
-          </button>
-          <button
-            onClick={downloadHtml}
-            className="flex items-center gap-1.5 rounded-lg bg-[#5e6ad2] px-3.5 py-2 text-[12px] font-medium text-white hover:bg-[#4f5bc3] transition-colors"
-          >
-            HTML (.html)
-          </button>
+        <div className="px-6 py-4 border-t border-[#1a1a1a] shrink-0">
+          {emailGate ? (
+            <form onSubmit={handleGateSubmit} className="flex flex-col gap-3">
+              <p className="text-[12px] text-[#6b6b6b]">Enter your email to download</p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={gateEmail}
+                  onChange={(e) => setGateEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoFocus
+                  className="flex-1 rounded-lg border border-[#252525] bg-[#0a0a0a] px-3.5 py-2 text-[13px] text-[#ededed] placeholder-[#3a3a3a] outline-none focus:border-[#5e6ad2] transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={gateStatus === "loading"}
+                  className="rounded-lg bg-[#5e6ad2] px-4 py-2 text-[12px] font-medium text-white hover:bg-[#4f5bc3] disabled:opacity-60 transition-colors"
+                >
+                  {gateStatus === "loading" ? "…" : "Download"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEmailGate(null); setGateEmail(""); }}
+                  className="rounded-lg border border-[#252525] px-3 py-2 text-[12px] text-[#6b6b6b] hover:text-[#ededed] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex items-center gap-3">
+              <p className="text-[12px] text-[#6b6b6b] mr-auto">Download your article</p>
+              <button
+                onClick={() => handleDownloadClick("txt")}
+                className="flex items-center gap-1.5 rounded-lg border border-[#252525] bg-[#0a0a0a] px-3.5 py-2 text-[12px] font-medium text-[#ededed] hover:border-[#5e6ad2] hover:text-[#5e6ad2] transition-colors"
+              >
+                Download (.txt)
+              </button>
+              <button
+                onClick={() => handleDownloadClick("html")}
+                className="flex items-center gap-1.5 rounded-lg bg-[#5e6ad2] px-3.5 py-2 text-[12px] font-medium text-white hover:bg-[#4f5bc3] transition-colors"
+              >
+                Download (.html)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
