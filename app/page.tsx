@@ -358,7 +358,7 @@ async function handleSignOut() {
       {/* Footer */}
       <footer className="border-t border-[#1a1a1a] px-6 py-4">
         <p className="text-center text-[12px] text-[#6b6b6b]">
-          Powered by AI · Data is estimated and for strategic guidance only
+          Rank Number 1
         </p>
       </footer>
 
