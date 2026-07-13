@@ -4,12 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import SearchInput from "@/components/SearchInput";
 import BulkInput from "@/components/BulkInput";
 import ResultCards from "@/components/KeywordCard";
+import UrlCards from "@/components/UrlCards";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
+import RelatedSites from "@/components/RelatedSites";
 import AuthModal from "@/components/AuthModal";
 import ArticleCard, { type Article } from "@/components/ArticleCard";
 import ArticleGenerating, { CyclingLoader } from "@/components/ArticleGenerating";
 import { useTheme } from "@/components/ThemeProvider";
-import type { KeywordData } from "@/lib/types";
+import type { KeywordData, UrlData } from "@/lib/types";
+import { isUrl } from "@/lib/isUrl";
 import {
   getStoredEmail,
   setStoredEmail,
@@ -21,11 +24,13 @@ import type { Session } from "@supabase/supabase-js";
 export default function Home() {
   const { theme, toggle } = useTheme();
   const [data, setData] = useState<KeywordData | null>(null);
+  const [urlData, setUrlData] = useState<UrlData | null>(null);
   const [activeKeyword, setActiveKeyword] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bulkMode, setBulkMode] = useState(false);
   const [sidebarKeywords, setSidebarKeywords] = useState<string[]>([]);
+  const [sidebarSites, setSidebarSites] = useState<string[]>([]);
 
   // Auth state
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -34,6 +39,11 @@ export default function Home() {
   const [article, setArticle] = useState<Article | null>(null);
   const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
   const [pendingDownload, setPendingDownload] = useState<(() => void) | null>(null);
+
+  // Tracking state
+  const [trackState, setTrackState] = useState<"idle" | "saving" | "saved">("idle");
+  const [trackedSites, setTrackedSites] = useState<Set<string>>(new Set());
+  const [pendingTrackUrl, setPendingTrackUrl] = useState<string | null>(null);
 
   // Auth session
   const [session, setSession] = useState<Session | null>(null);
@@ -89,6 +99,21 @@ const fetchCredits = useCallback(async (email: string) => {
         setStoredEmail(email);
         fetchCredits(email);
         fetchPendingArticle(email);
+        // Execute any pending track that was blocked by auth
+        setPendingTrackUrl((pending) => {
+          if (pending) {
+            setTrackState("saving");
+            fetch("/api/track-url", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: pending, email }),
+            }).then(() => {
+              setTrackedSites((prev) => new Set(prev).add(pending));
+              setTrackState("saved");
+            }).catch(() => setTrackState("idle"));
+          }
+          return null;
+        });
       } else if (!sess) {
         setCredits(null);
       }
@@ -104,32 +129,54 @@ const fetchCredits = useCallback(async (email: string) => {
     setIsLoading(true);
     setError(null);
     setActiveKeyword(query);
+    setData(null);
+    setUrlData(null);
+    setTrackState("idle");
+
+    const queryIsUrl = isUrl(query);
 
     try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword: query, email, anonId }),
-      });
+      if (queryIsUrl) {
+        const res = await fetch("/api/analyze-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: query, email, anonId }),
+        });
 
-      if (res.status === 429) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Daily search limit reached. Try again tomorrow.");
+        if (res.status === 429) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "Daily search limit reached. Try again tomorrow.");
+        }
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "Something went wrong. Please try again.");
+        }
+
+        const result: UrlData = await res.json();
+        setUrlData(result);
+        setSidebarSites(result.relatedSites ?? []);
+      } else {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyword: query, email, anonId }),
+        });
+
+        if (res.status === 429) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "Daily search limit reached. Try again tomorrow.");
+        }
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "Something went wrong. Please try again.");
+        }
+
+        const result: KeywordData = await res.json();
+        setData(result);
+        if (!bulkMode) setSidebarKeywords(result.recommended);
       }
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Something went wrong. Please try again.");
-      }
-
-      const result: KeywordData = await res.json();
-      setData(result);
-
-      if (email) {
-        fetchCredits(email);
-      }
-
-      if (!bulkMode) setSidebarKeywords(result.recommended);
+      if (email) fetchCredits(email);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -170,6 +217,27 @@ async function handleSignOut() {
     generateArticle(keyword, cta.advice, email);
   }
 
+  async function trackUrl(url: string) {
+    const email = session?.user?.email;
+    if (!email) {
+      setPendingTrackUrl(url);
+      setShowAuthModal(true);
+      return;
+    }
+    setTrackState("saving");
+    try {
+      await fetch("/api/track-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, email }),
+      });
+      setTrackedSites((prev) => new Set(prev).add(url));
+      setTrackState("saved");
+    } catch {
+      setTrackState("idle");
+    }
+  }
+
   function handleBulkSubmit(keywords: string[]) {
     setBulkMode(true);
     setSidebarKeywords(keywords);
@@ -183,7 +251,9 @@ async function handleSignOut() {
   function exitBulkMode() {
     setBulkMode(false);
     setSidebarKeywords([]);
+    setSidebarSites([]);
     setData(null);
+    setUrlData(null);
     setError(null);
     setActiveKeyword("");
   }
@@ -257,7 +327,7 @@ async function handleSignOut() {
       <main className="flex flex-1 flex-col items-center px-4 py-16 sm:py-24">
 
         {/* Hero — only before first search */}
-        {!data && !isLoading && !bulkMode && (
+        {!data && !urlData && !isLoading && !bulkMode && (
           <div className="mb-10 text-center">
             <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-tight text-[var(--color-fg)] leading-tight">
               Keyword intelligence,
@@ -265,8 +335,8 @@ async function handleSignOut() {
               <span className="text-[var(--color-muted)]">instantly.</span>
             </h1>
             <p className="mt-3 text-[15px] text-[var(--color-muted)] max-w-md mx-auto">
-              Enter any keyword to see difficulty, volume, intent, CPC, and a
-              step-by-step ranking plan.
+              Enter a keyword for search metrics, or paste a URL to see traffic,
+              authority, competitors, and ranking opportunities.
             </p>
           </div>
         )}
@@ -319,15 +389,27 @@ async function handleSignOut() {
             <div className="flex flex-col lg:flex-row-reverse lg:items-start lg:gap-6">
               <div className="flex-1 min-w-0 flex items-center justify-center py-16">
                 <CyclingLoader
-                  messages={[
-                    "Fetching search data…",
-                    "Analyzing keyword difficulty…",
-                    "Estimating monthly volume…",
-                    "Detecting search intent…",
-                    "Calculating cost per click…",
-                    "Writing your ranking plan…",
-                    "Finding related keywords…",
-                  ]}
+                  messages={
+                    isUrl(activeKeyword)
+                      ? [
+                          "Fetching site data…",
+                          "Estimating organic traffic…",
+                          "Calculating traffic value…",
+                          "Identifying top competitors…",
+                          "Analyzing backlink authority…",
+                          "Clustering ranking intent…",
+                          "Finding content gaps…",
+                        ]
+                      : [
+                          "Fetching search data…",
+                          "Analyzing keyword difficulty…",
+                          "Estimating monthly volume…",
+                          "Detecting search intent…",
+                          "Calculating cost per click…",
+                          "Writing your ranking plan…",
+                          "Finding related keywords…",
+                        ]
+                  }
                   duration={20}
                 />
               </div>
@@ -344,10 +426,9 @@ async function handleSignOut() {
           </div>
         )}
 
-        {/* Results */}
+        {/* Keyword results */}
         {data && !isLoading && (
           <div className="mt-10 w-full max-w-5xl flex flex-col gap-6">
-            {/* Current keyword label */}
             <div className="flex items-center gap-2">
               <span className="text-[13px] text-[var(--color-muted)]">Results for</span>
               <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-[13px] font-medium text-[var(--color-fg)]">
@@ -359,14 +440,44 @@ async function handleSignOut() {
               <div className="flex-1 min-w-0">
                 <ResultCards data={data} onCreateArticle={handleCreateArticle} />
               </div>
-
-              {/* Sidebar */}
               <div className="mt-6 lg:mt-0 lg:w-[260px] lg:shrink-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
                 <RecommendedKeywords
                   keywords={sidebarKeywords}
                   activeKeyword={activeKeyword}
                   onSelect={handleSidebarClick}
                   label={bulkMode ? "Your Keywords" : "Related Keywords"}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* URL analytics results */}
+        {urlData && !isLoading && (
+          <div className="mt-10 w-full max-w-5xl flex flex-col gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] text-[var(--color-muted)]">Analysis for</span>
+              <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-[13px] font-medium text-[var(--color-fg)] max-w-[400px] truncate">
+                {urlData.url}
+              </span>
+            </div>
+
+            <div className="flex flex-col lg:flex-row-reverse lg:items-start lg:gap-6">
+              <div className="flex-1 min-w-0">
+                <UrlCards
+                  data={urlData}
+                  onCreateArticle={handleCreateArticle}
+                  onTrack={() => trackUrl(urlData.url)}
+                  trackState={trackedSites.has(urlData.url) ? "saved" : trackState}
+                />
+              </div>
+              <div className="mt-6 lg:mt-0 lg:w-[260px] lg:shrink-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
+                <RelatedSites
+                  sites={sidebarSites}
+                  activeSite={activeKeyword}
+                  onSelect={handleSidebarClick}
+                  onAdd={(site) => trackUrl(`https://${site}`)}
+                  trackedSites={trackedSites}
                 />
               </div>
             </div>
