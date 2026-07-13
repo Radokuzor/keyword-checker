@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Dashboard from "@/components/Dashboard";
 import SearchInput from "@/components/SearchInput";
 import BulkInput from "@/components/BulkInput";
 import ResultCards from "@/components/KeywordCard";
@@ -34,20 +35,27 @@ export default function Home() {
 
   // Auth state
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Article state
   const [article, setArticle] = useState<Article | null>(null);
   const [isGeneratingArticle, setIsGeneratingArticle] = useState(false);
   const [pendingDownload, setPendingDownload] = useState<(() => void) | null>(null);
 
-  // Tracking state
+  // URL tracking state
   const [trackState, setTrackState] = useState<"idle" | "saving" | "saved">("idle");
   const [trackedSites, setTrackedSites] = useState<Set<string>>(new Set());
   const [pendingTrackUrl, setPendingTrackUrl] = useState<string | null>(null);
 
+  // Keyword tracking state
+  const [kwTrackState, setKwTrackState] = useState<"idle" | "saving" | "saved">("idle");
+  const [trackedKeywords, setTrackedKeywords] = useState<Set<string>>(new Set());
+  const [pendingTrackKeyword, setPendingTrackKeyword] = useState<string | null>(null);
+
   // Auth session
   const [session, setSession] = useState<Session | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
+  const [plan, setPlan] = useState<string | null>(null);
 
 const fetchCredits = useCallback(async (email: string) => {
     try {
@@ -55,6 +63,7 @@ const fetchCredits = useCallback(async (email: string) => {
       if (res.ok) {
         const body = await res.json();
         setCredits(body.credits ?? 0);
+        setPlan(body.plan ?? null);
       }
     } catch {
       // non-critical
@@ -114,8 +123,23 @@ const fetchCredits = useCallback(async (email: string) => {
           }
           return null;
         });
+        setPendingTrackKeyword((pending) => {
+          if (pending) {
+            setKwTrackState("saving");
+            fetch("/api/track-keyword", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ keyword: pending, email }),
+            }).then(() => {
+              setTrackedKeywords((prev) => new Set(prev).add(pending));
+              setKwTrackState("saved");
+            }).catch(() => setKwTrackState("idle"));
+          }
+          return null;
+        });
       } else if (!sess) {
         setCredits(null);
+        setPlan(null);
       }
     });
 
@@ -132,6 +156,7 @@ const fetchCredits = useCallback(async (email: string) => {
     setData(null);
     setUrlData(null);
     setTrackState("idle");
+    setKwTrackState("idle");
 
     const queryIsUrl = isUrl(query);
 
@@ -217,6 +242,27 @@ async function handleSignOut() {
     generateArticle(keyword, cta.advice, email);
   }
 
+  async function trackKeyword(keyword: string) {
+    const email = session?.user?.email;
+    if (!email) {
+      setPendingTrackKeyword(keyword);
+      setShowAuthModal(true);
+      return;
+    }
+    setKwTrackState("saving");
+    try {
+      await fetch("/api/track-keyword", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword, email }),
+      });
+      setTrackedKeywords((prev) => new Set(prev).add(keyword));
+      setKwTrackState("saved");
+    } catch {
+      setKwTrackState("idle");
+    }
+  }
+
   async function trackUrl(url: string) {
     const email = session?.user?.email;
     if (!email) {
@@ -288,10 +334,21 @@ async function handleSignOut() {
                 </div>
               )}
               <button
-                onClick={handleSignOut}
-                className="text-[12px] text-[var(--color-muted)] hover:text-[var(--color-fg)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 transition-colors"
+                onClick={() => setShowDashboard((v) => !v)}
+                className="flex items-center gap-1.5 text-[12px] font-medium border border-[var(--color-border)] rounded-lg px-3 py-1.5 transition-colors"
+                style={{
+                  background: showDashboard ? "var(--color-accent)" : "transparent",
+                  color: showDashboard ? "white" : "var(--color-muted)",
+                  borderColor: showDashboard ? "var(--color-accent)" : "var(--color-border)",
+                }}
               >
-                Sign out
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                  <rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                </svg>
+                Dashboard
               </button>
             </>
           ) : (
@@ -322,6 +379,20 @@ async function handleSignOut() {
           </button>
         </div>
       </header>
+
+      {/* Dashboard panel */}
+      {showDashboard && session?.user?.email && (
+        <div className="relative z-40">
+          <Dashboard
+            email={session.user.email}
+            credits={credits}
+            plan={plan}
+            onClose={() => setShowDashboard(false)}
+            onSignOut={() => { handleSignOut(); setShowDashboard(false); }}
+            onSearch={(q) => { handleSearch(q); setShowDashboard(false); }}
+          />
+        </div>
+      )}
 
       {/* Main */}
       <main className="flex flex-1 flex-col items-center px-4 py-16 sm:py-24">
@@ -438,7 +509,12 @@ async function handleSignOut() {
 
             <div className="flex flex-col lg:flex-row-reverse lg:items-start lg:gap-6">
               <div className="flex-1 min-w-0">
-                <ResultCards data={data} onCreateArticle={handleCreateArticle} />
+                <ResultCards
+                  data={data}
+                  onCreateArticle={handleCreateArticle}
+                  onTrack={() => trackKeyword(data.keyword)}
+                  trackState={trackedKeywords.has(data.keyword) ? "saved" : kwTrackState}
+                />
               </div>
               <div className="mt-6 lg:mt-0 lg:w-[260px] lg:shrink-0 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
                 <RecommendedKeywords
@@ -446,6 +522,8 @@ async function handleSignOut() {
                   activeKeyword={activeKeyword}
                   onSelect={handleSidebarClick}
                   label={bulkMode ? "Your Keywords" : "Related Keywords"}
+                  onAdd={(kw) => trackKeyword(kw)}
+                  trackedKeywords={trackedKeywords}
                 />
               </div>
             </div>

@@ -83,12 +83,16 @@ function TrendChip({ trend }: { trend: string }) {
   );
 }
 
+type TrackState = "idle" | "saving" | "saved";
+
 interface CardsProps {
   data: KeywordData;
   onCreateArticle?: () => void;
+  onTrack?: () => void;
+  trackState?: TrackState;
 }
 
-export default function ResultCards({ data, onCreateArticle }: CardsProps) {
+export default function ResultCards({ data, onCreateArticle, onTrack, trackState = "idle" }: CardsProps) {
   const cardBase =
     "rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex flex-col gap-1";
   const label = "text-[11px] uppercase tracking-widest text-[var(--color-muted)] font-medium";
@@ -105,11 +109,40 @@ export default function ResultCards({ data, onCreateArticle }: CardsProps) {
 
       {/* 2 — Search Volume */}
       <div className={cardBase}>
-        <p className={label}>Monthly Searches</p>
-        <p className={`${value} mt-1`}>{formatVolume(data.volume.monthly)}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <TrendChip trend={data.volume.trend} />
-          <span className="text-[12px] text-[var(--color-muted)]">/ month avg</span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className={label}>Monthly Searches</p>
+            <p className={`${value} mt-1`}>{formatVolume(data.volume.monthly)}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <TrendChip trend={data.volume.trend} />
+              <span className="text-[12px] text-[var(--color-muted)]">/ month avg</span>
+            </div>
+          </div>
+          {onTrack && (
+            <button
+              onClick={onTrack}
+              disabled={trackState === "saving" || trackState === "saved"}
+              className="shrink-0 flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[12px] font-medium transition-all active:scale-95 disabled:opacity-60"
+              style={{
+                background: trackState === "saved" ? "#4caf6e15" : "var(--color-surface-raised)",
+                color: trackState === "saved" ? "#4caf6e" : "var(--color-fg)",
+                borderColor: trackState === "saved" ? "#4caf6e40" : "var(--color-border)",
+              }}
+            >
+              {trackState === "saving" ? (
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-[var(--color-border)] border-t-[var(--color-accent)]" />
+              ) : trackState === "saved" ? (
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                  <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                  <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+              {trackState === "saved" ? "Tracking" : "Track"}
+            </button>
+          )}
         </div>
       </div>
 
