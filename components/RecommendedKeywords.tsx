@@ -17,14 +17,13 @@ export default function RecommendedKeywords({
 
   return (
     <div className="w-full">
-      <p className="mb-3 text-[11px] uppercase tracking-widest text-[#6b6b6b] font-medium">
+      <p className="mb-3 text-[11px] uppercase tracking-widest text-[var(--color-muted)] font-medium">
         {label}
       </p>
-      <div className="rounded-xl border border-[#252525] overflow-hidden">
-        {/* Table header */}
-        <div className="grid grid-cols-[28px_1fr] gap-3 px-4 py-2.5 border-b border-[#1e1e1e] bg-[#0e0e0e]">
-          <span className="text-[11px] uppercase tracking-widest text-[#4a4a4a] font-medium">#</span>
-          <span className="text-[11px] uppercase tracking-widest text-[#4a4a4a] font-medium">Keyword</span>
+      <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="grid grid-cols-[28px_1fr] gap-3 px-4 py-2.5 border-b border-[var(--color-border)] bg-[var(--color-surface-sunken)]">
+          <span className="text-[11px] uppercase tracking-widest text-[var(--color-muted-2)] font-medium">#</span>
+          <span className="text-[11px] uppercase tracking-widest text-[var(--color-muted-2)] font-medium">Keyword</span>
         </div>
 
         {keywords.map((kw, i) => {
@@ -34,13 +33,13 @@ export default function RecommendedKeywords({
               key={kw}
               type="button"
               onClick={() => onSelect(kw)}
-              className="w-full grid grid-cols-[28px_1fr] gap-3 px-4 py-3 text-left transition-colors border-b border-[#1a1a1a] last:border-b-0"
+              className="w-full grid grid-cols-[28px_1fr] gap-3 px-4 py-3 text-left transition-colors border-b border-[var(--color-border)] last:border-b-0"
               style={{
                 background: isActive ? "#5e6ad210" : "transparent",
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
-                  (e.currentTarget as HTMLButtonElement).style.background = "#161616";
+                  (e.currentTarget as HTMLButtonElement).style.background = "var(--color-row-hover)";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
@@ -49,17 +48,17 @@ export default function RecommendedKeywords({
             >
               <span
                 className="text-[13px] font-medium tabular-nums"
-                style={{ color: isActive ? "#5e6ad2" : "#4a4a4a" }}
+                style={{ color: isActive ? "var(--color-accent)" : "var(--color-muted-2)" }}
               >
                 {i + 1}
               </span>
               <span
                 className="text-[13px] font-medium"
-                style={{ color: isActive ? "#ededed" : "#999" }}
+                style={{ color: isActive ? "var(--color-fg)" : "var(--color-muted)" }}
               >
                 {kw}
                 {isActive && (
-                  <span className="ml-2 text-[11px] font-normal text-[#5e6ad2]">
+                  <span className="ml-2 text-[11px] font-normal text-[var(--color-accent)]">
                     viewing
                   </span>
                 )}

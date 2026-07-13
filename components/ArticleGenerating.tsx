@@ -32,7 +32,7 @@ export function CyclingLoader({ messages, duration }: CyclingLoaderProps) {
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-sm mx-auto px-6">
       <div className="relative flex items-center justify-center">
-        <div className="absolute h-16 w-16 rounded-full bg-[#5e6ad2] opacity-10 animate-ping" />
+        <div className="absolute h-16 w-16 rounded-full bg-[var(--color-accent)] opacity-10 animate-ping" />
         <div className="h-12 w-12 rounded-full bg-[#5e6ad215] border border-[#5e6ad230] flex items-center justify-center">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M4 6h12M4 10h8M4 14h10" stroke="#5e6ad2" strokeWidth="1.5" strokeLinecap="round" />
@@ -42,16 +42,16 @@ export function CyclingLoader({ messages, duration }: CyclingLoaderProps) {
 
       <div className="h-5 flex items-center justify-center w-full">
         <p
-          className="text-[14px] text-[#ededed] font-medium text-center transition-opacity duration-300"
+          className="text-[14px] text-[var(--color-fg)] font-medium text-center transition-opacity duration-300"
           style={{ opacity: visible ? 1 : 0 }}
         >
           {messages[msgIndex]}
         </p>
       </div>
 
-      <div className="w-full h-[3px] rounded-full bg-[#1f1f1f] overflow-hidden">
+      <div className="w-full h-[3px] rounded-full bg-[var(--color-progress-track)] overflow-hidden">
         <div
-          className="h-full rounded-full bg-[#5e6ad2]"
+          className="h-full rounded-full bg-[var(--color-accent)]"
           style={{
             width: `${progress}%`,
             transition: `width ${duration}s linear`,
@@ -59,7 +59,7 @@ export function CyclingLoader({ messages, duration }: CyclingLoaderProps) {
         />
       </div>
 
-      <p className="text-[12px] text-[#6b6b6b]">This can take up to a minute</p>
+      <p className="text-[12px] text-[var(--color-muted)]">This can take up to a minute</p>
     </div>
   );
 }

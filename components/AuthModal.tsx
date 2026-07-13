@@ -40,10 +40,10 @@ export default function AuthModal({ onClose, anonId, onEmailSent }: AuthModalPro
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[#252525] bg-[#111111] p-6 shadow-2xl">
+      <div className="relative w-full max-w-sm mx-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-[#6b6b6b] hover:text-[#ededed] transition-colors"
+          className="absolute right-4 top-4 text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           aria-label="Close"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -59,26 +59,26 @@ export default function AuthModal({ onClose, anonId, onEmailSent }: AuthModalPro
                 <rect x="1" y="5" width="20" height="14" rx="2" stroke="#5e6ad2" strokeWidth="1.5" />
               </svg>
             </div>
-            <h2 className="text-[17px] font-semibold text-[#ededed]">Check your inbox</h2>
-            <p className="mt-2 text-[13px] text-[#6b6b6b] leading-relaxed">
+            <h2 className="text-[17px] font-semibold text-[var(--color-fg)]">Check your inbox</h2>
+            <p className="mt-2 text-[13px] text-[var(--color-muted)] leading-relaxed">
               We sent a sign-in link to{" "}
-              <span className="text-[#ededed]">{email}</span>.
+              <span className="text-[var(--color-fg)]">{email}</span>.
               <br />
               Click it to sign in — no password needed.
             </p>
             <button
               onClick={onClose}
-              className="mt-5 text-[12px] text-[#6b6b6b] hover:text-[#ededed] transition-colors"
+              className="mt-5 text-[12px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
             >
               Close
             </button>
           </div>
         ) : (
           <>
-            <h2 className="text-[17px] font-semibold text-[#ededed] tracking-tight">
+            <h2 className="text-[17px] font-semibold text-[var(--color-fg)] tracking-tight">
               Sign in or create account
             </h2>
-            <p className="mt-1.5 text-[13px] text-[#6b6b6b]">
+            <p className="mt-1.5 text-[13px] text-[var(--color-muted)]">
               Enter your email and we&apos;ll send you a secure link to login to your account.
             </p>
 
@@ -90,21 +90,21 @@ export default function AuthModal({ onClose, anonId, onEmailSent }: AuthModalPro
                 placeholder="you@example.com"
                 required
                 autoFocus
-                className="w-full rounded-lg border border-[#252525] bg-[#0a0a0a] px-4 py-2.5 text-[14px] text-[#ededed] placeholder-[#3a3a3a] outline-none focus:border-[#5e6ad2] transition-colors"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-2.5 text-[14px] text-[var(--color-fg)] placeholder:text-[var(--color-muted-2)] outline-none focus:border-[var(--color-accent)] transition-colors"
               />
               {status === "error" && (
-                <p className="text-[12px] text-[#e5534b]">{errorMsg}</p>
+                <p className="text-[12px] text-[var(--color-danger)]">{errorMsg}</p>
               )}
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-lg bg-[#5e6ad2] py-2.5 text-[14px] font-medium text-white hover:bg-[#4f5bc3] disabled:opacity-60 transition-colors cursor-pointer"
+                className="w-full rounded-lg bg-[var(--color-accent)] py-2.5 text-[14px] font-medium text-white hover:bg-[var(--color-accent-hover)] disabled:opacity-60 transition-colors cursor-pointer"
               >
                 {status === "loading" ? "Sending…" : "Send magic link"}
               </button>
             </form>
 
-            <p className="mt-4 text-center text-[11px] text-[#3a3a3a]">
+            <p className="mt-4 text-center text-[11px] text-[var(--color-muted-2)]">
               Already have credits? Use the same email to restore them.
             </p>
           </>

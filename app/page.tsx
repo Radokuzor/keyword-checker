@@ -8,6 +8,7 @@ import RecommendedKeywords from "@/components/RecommendedKeywords";
 import AuthModal from "@/components/AuthModal";
 import ArticleCard, { type Article } from "@/components/ArticleCard";
 import ArticleGenerating, { CyclingLoader } from "@/components/ArticleGenerating";
+import { useTheme } from "@/components/ThemeProvider";
 import type { KeywordData } from "@/lib/types";
 import {
   getStoredEmail,
@@ -18,6 +19,7 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 import type { Session } from "@supabase/supabase-js";
 
 export default function Home() {
+  const { theme, toggle } = useTheme();
   const [data, setData] = useState<KeywordData | null>(null);
   const [activeKeyword, setActiveKeyword] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -189,15 +191,15 @@ async function handleSignOut() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-[#1a1a1a] px-6 py-4">
+      <header className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-md bg-[#5e6ad2] flex items-center justify-center">
+          <div className="h-6 w-6 rounded-md bg-[var(--color-accent)] flex items-center justify-center">
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <circle cx="6" cy="6" r="4" stroke="white" strokeWidth="1.5" />
               <path d="M9.5 9.5L12 12" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <span className="text-[14px] font-semibold text-[#ededed] tracking-tight">
+          <span className="text-[14px] font-semibold text-[var(--color-fg)] tracking-tight">
             KeywordIQ
           </span>
         </div>
@@ -206,10 +208,10 @@ async function handleSignOut() {
           {session ? (
             <>
               {credits !== null && (
-                <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+                <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-muted)]">
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      credits > 0 ? "bg-[#4caf6e]" : "bg-[#e5534b]"
+                      credits > 0 ? "bg-[var(--color-success)]" : "bg-[var(--color-danger)]"
                     }`}
                   />
                   {credits} credit{credits !== 1 ? "s" : ""} remaining
@@ -217,7 +219,7 @@ async function handleSignOut() {
               )}
               <button
                 onClick={handleSignOut}
-                className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] border border-[#252525] rounded-lg px-3 py-1.5 transition-colors"
+                className="text-[12px] text-[var(--color-muted)] hover:text-[var(--color-fg)] border border-[var(--color-border)] rounded-lg px-3 py-1.5 transition-colors"
               >
                 Sign out
               </button>
@@ -225,11 +227,29 @@ async function handleSignOut() {
           ) : (
             <button
               onClick={() => setShowAuthModal(true)}
-              className="rounded-lg bg-[#5e6ad2] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[#6b77e0] active:scale-95 transition-all"
+              className="rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-[12px] font-medium text-white hover:bg-[var(--color-accent-hover)] active:scale-95 transition-all"
             >
               Sign in / Sign up
             </button>
           )}
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            aria-label="Toggle theme"
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:bg-[var(--color-surface-raised)] transition-colors"
+          >
+            {theme === "dark" ? (
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="4" stroke="currentColor" strokeWidth="1.6" />
+                <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
         </div>
       </header>
 
@@ -239,12 +259,12 @@ async function handleSignOut() {
         {/* Hero — only before first search */}
         {!data && !isLoading && !bulkMode && (
           <div className="mb-10 text-center">
-            <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-tight text-[#ededed] leading-tight">
+            <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-tight text-[var(--color-fg)] leading-tight">
               Keyword intelligence,
               <br />
-              <span className="text-[#6b6b6b]">instantly.</span>
+              <span className="text-[var(--color-muted)]">instantly.</span>
             </h1>
-            <p className="mt-3 text-[15px] text-[#6b6b6b] max-w-md mx-auto">
+            <p className="mt-3 text-[15px] text-[var(--color-muted)] max-w-md mx-auto">
               Enter any keyword to see difficulty, volume, intent, CPC, and a
               step-by-step ranking plan.
             </p>
@@ -253,7 +273,6 @@ async function handleSignOut() {
 
         {/* Input area */}
         <>
-
             {bulkMode && !data && !isLoading ? (
               <BulkInput onSubmit={handleBulkSubmit} onClose={exitBulkMode} />
             ) : !bulkMode ? (
@@ -264,7 +283,7 @@ async function handleSignOut() {
               />
             ) : (
               <div className="w-full max-w-5xl flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-[13px] text-[#6b6b6b]">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--color-muted)]">
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                     <rect x="1" y="3" width="14" height="1.5" rx="0.75" fill="currentColor" />
                     <rect x="1" y="7.25" width="10" height="1.5" rx="0.75" fill="currentColor" />
@@ -274,7 +293,7 @@ async function handleSignOut() {
                 </div>
                 <button
                   onClick={exitBulkMode}
-                  className="text-[12px] text-[#6b6b6b] hover:text-[#ededed] transition-colors"
+                  className="text-[12px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
                 >
                   ← Single search
                 </button>
@@ -284,13 +303,13 @@ async function handleSignOut() {
 
         {/* Error state */}
         {error && !isLoading && (
-          <div className="mt-10 w-full max-w-xl rounded-xl border border-[#3a1f1f] bg-[#1a0f0f] px-5 py-4 flex items-start gap-3">
-            <svg className="mt-0.5 shrink-0 text-[#e5534b]" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <div className="mt-10 w-full max-w-xl rounded-xl border border-[var(--color-error-border)] bg-[var(--color-error-bg)] px-5 py-4 flex items-start gap-3">
+            <svg className="mt-0.5 shrink-0 text-[var(--color-danger)]" width="16" height="16" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
               <path d="M8 5v3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               <circle cx="8" cy="11" r="0.75" fill="currentColor" />
             </svg>
-            <p className="text-[13px] text-[#e5534b]">{error}</p>
+            <p className="text-[13px] text-[var(--color-danger)]">{error}</p>
           </div>
         )}
 
@@ -330,8 +349,8 @@ async function handleSignOut() {
           <div className="mt-10 w-full max-w-5xl flex flex-col gap-6">
             {/* Current keyword label */}
             <div className="flex items-center gap-2">
-              <span className="text-[13px] text-[#6b6b6b]">Results for</span>
-              <span className="rounded-full border border-[#252525] bg-[#111111] px-3 py-1 text-[13px] font-medium text-[#ededed]">
+              <span className="text-[13px] text-[var(--color-muted)]">Results for</span>
+              <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-[13px] font-medium text-[var(--color-fg)]">
                 {data.keyword}
               </span>
             </div>
@@ -356,8 +375,8 @@ async function handleSignOut() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[#1a1a1a] px-6 py-4">
-        <p className="text-center text-[12px] text-[#6b6b6b]">
+      <footer className="border-t border-[var(--color-border)] px-6 py-4">
+        <p className="text-center text-[12px] text-[var(--color-muted)]">
           Rank Number 1
         </p>
       </footer>

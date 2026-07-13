@@ -41,8 +41,12 @@ interface PaywallOverlayProps {
 
 export default function PaywallOverlay({ onSelectPlan, isLoading }: PaywallOverlayProps) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl px-4"
-      style={{ background: "linear-gradient(to bottom, #0a0a0a00 0%, #0a0a0acc 20%, #0a0a0af5 50%)" }}
+    <div
+      className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl px-4"
+      style={{
+        background:
+          "linear-gradient(to bottom, var(--gradient-overlay-start) 0%, var(--gradient-overlay-mid) 20%, var(--gradient-overlay-end) 50%)",
+      }}
     >
       <div className="w-full max-w-lg mt-auto pb-6">
         {/* Lock icon + heading */}
@@ -53,10 +57,10 @@ export default function PaywallOverlay({ onSelectPlan, isLoading }: PaywallOverl
               <path d="M5 7V5a3 3 0 016 0v2" stroke="#5e6ad2" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           </div>
-          <h2 className="text-[18px] font-semibold text-[#ededed] tracking-tight">
+          <h2 className="text-[18px] font-semibold text-[var(--color-fg)] tracking-tight">
             Free search used
           </h2>
-          <p className="mt-1 text-[13px] text-[#6b6b6b]">
+          <p className="mt-1 text-[13px] text-[var(--color-muted)]">
             Unlock more searches to continue your research
           </p>
         </div>
@@ -71,37 +75,39 @@ export default function PaywallOverlay({ onSelectPlan, isLoading }: PaywallOverl
               className={`relative flex flex-col rounded-xl border p-4 text-left transition-all disabled:opacity-60 cursor-pointer ${
                 plan.highlighted
                   ? "border-[#5e6ad2] bg-[#5e6ad210] hover:bg-[#5e6ad218]"
-                  : "border-[#252525] bg-[#111111] hover:border-[#353535] hover:bg-[#151515]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-raised)]"
               }`}
             >
               {plan.highlighted && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#5e6ad2] px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider whitespace-nowrap">
+                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[var(--color-accent)] px-2.5 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider whitespace-nowrap">
                   Most popular
                 </span>
               )}
-              <p className="text-[10px] uppercase tracking-widest text-[#6b6b6b] font-medium">
+              <p className="text-[10px] uppercase tracking-widest text-[var(--color-muted)] font-medium">
                 {plan.name}
               </p>
-              <p className="mt-2 text-[26px] font-semibold text-[#ededed] leading-none">
+              <p className="mt-2 text-[26px] font-semibold text-[var(--color-fg)] leading-none">
                 {plan.price}
               </p>
-              <p className="mt-2 text-[12px] font-medium text-[#ededed]">
+              <p className="mt-2 text-[12px] font-medium text-[var(--color-fg)]">
                 {plan.searches}
               </p>
-              <p className="mt-1 text-[11px] text-[#6b6b6b]">{plan.note}</p>
+              <p className="mt-1 text-[11px] text-[var(--color-muted)]">{plan.note}</p>
 
-              <div className={`mt-3 rounded-lg py-1.5 text-center text-[12px] font-medium transition-colors ${
-                plan.highlighted
-                  ? "bg-[#5e6ad2] text-white"
-                  : "bg-[#1a1a1a] text-[#ededed]"
-              }`}>
+              <div
+                className={`mt-3 rounded-lg py-1.5 text-center text-[12px] font-medium transition-colors ${
+                  plan.highlighted
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "bg-[var(--color-surface-raised)] text-[var(--color-fg)]"
+                }`}
+              >
                 {isLoading ? "..." : "Get started →"}
               </div>
             </button>
           ))}
         </div>
 
-        <p className="mt-4 text-center text-[11px] text-[#3a3a3a]">
+        <p className="mt-4 text-center text-[11px] text-[var(--color-muted-2)]">
           Secure payment via Stripe · Cancel anytime
         </p>
       </div>

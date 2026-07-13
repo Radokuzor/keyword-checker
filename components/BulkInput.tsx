@@ -75,12 +75,12 @@ export default function BulkInput({ onSubmit, onClose }: BulkInputProps) {
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-[15px] font-semibold text-[#ededed]">Bulk Keyword Analysis</h2>
-          <p className="text-[12px] text-[#6b6b6b] mt-0.5">Upload a CSV or paste keywords separated by commas</p>
+          <h2 className="text-[15px] font-semibold text-[var(--color-fg)]">Bulk Keyword Analysis</h2>
+          <p className="text-[12px] text-[var(--color-muted)] mt-0.5">Upload a CSV or paste keywords separated by commas</p>
         </div>
         <button
           onClick={onClose}
-          className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b] hover:text-[#ededed] transition-colors"
+          className="flex items-center gap-1.5 text-[12px] text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M10 4L4 10M4 4l6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -90,15 +90,15 @@ export default function BulkInput({ onSubmit, onClose }: BulkInputProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 rounded-lg border border-[#252525] bg-[#0e0e0e] p-1">
+      <div className="flex gap-1 mb-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-sunken)] p-1">
         {(["upload", "paste"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => { setTab(t); setPreview([]); setFileName(null); setPasteText(""); }}
             className="flex-1 rounded-md py-1.5 text-[13px] font-medium transition-colors"
             style={{
-              background: tab === t ? "#1a1a1a" : "transparent",
-              color: tab === t ? "#ededed" : "#6b6b6b",
+              background: tab === t ? "var(--color-surface-raised)" : "transparent",
+              color: tab === t ? "var(--color-fg)" : "var(--color-muted)",
             }}
           >
             {t === "upload" ? "Upload CSV" : "Paste Keywords"}
@@ -115,8 +115,8 @@ export default function BulkInput({ onSubmit, onClose }: BulkInputProps) {
           onClick={() => fileInputRef.current?.click()}
           className="cursor-pointer rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-3 py-12 transition-colors"
           style={{
-            borderColor: isDragging ? "#5e6ad2" : "#252525",
-            background: isDragging ? "#5e6ad210" : "#0e0e0e",
+            borderColor: isDragging ? "var(--color-accent)" : "var(--color-border)",
+            background: isDragging ? "#5e6ad210" : "var(--color-surface-sunken)",
           }}
         >
           <input
@@ -126,19 +126,19 @@ export default function BulkInput({ onSubmit, onClose }: BulkInputProps) {
             className="hidden"
             onChange={handleFileInput}
           />
-          <svg className="text-[#6b6b6b]" width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <svg className="text-[var(--color-muted)]" width="28" height="28" viewBox="0 0 24 24" fill="none">
             <path d="M12 16V8M12 8l-3 3M12 8l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M3 15v3a2 2 0 002 2h14a2 2 0 002-2v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           {fileName ? (
             <div className="text-center">
-              <p className="text-[13px] font-medium text-[#ededed]">{fileName}</p>
-              <p className="text-[12px] text-[#6b6b6b] mt-0.5">Click to replace</p>
+              <p className="text-[13px] font-medium text-[var(--color-fg)]">{fileName}</p>
+              <p className="text-[12px] text-[var(--color-muted)] mt-0.5">Click to replace</p>
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-[13px] font-medium text-[#ededed]">Drop your CSV here</p>
-              <p className="text-[12px] text-[#6b6b6b] mt-0.5">or click to browse · one keyword per row</p>
+              <p className="text-[13px] font-medium text-[var(--color-fg)]">Drop your CSV here</p>
+              <p className="text-[12px] text-[var(--color-muted)] mt-0.5">or click to browse · one keyword per row</p>
             </div>
           )}
         </div>
@@ -151,13 +151,13 @@ export default function BulkInput({ onSubmit, onClose }: BulkInputProps) {
           onChange={(e) => handlePasteChange(e.target.value)}
           placeholder={"email marketing, content strategy, SEO audit,\nbest CRM software, keyword research tools..."}
           rows={6}
-          className="w-full rounded-xl border border-[#252525] bg-[#0e0e0e] px-4 py-3 text-[13px] text-[#ededed] placeholder:text-[#4a4a4a] outline-none resize-none focus:border-[#5e6ad2] transition-colors"
+          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-sunken)] px-4 py-3 text-[13px] text-[var(--color-fg)] placeholder:text-[var(--color-muted-2)] outline-none resize-none focus:border-[var(--color-accent)] transition-colors"
         />
       )}
 
       {/* Preview count + submit */}
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-[12px] text-[#6b6b6b]">
+        <span className="text-[12px] text-[var(--color-muted)]">
           {preview.length > 0
             ? `${preview.length} keyword${preview.length === 1 ? "" : "s"} ready · first will load automatically`
             : "No keywords yet"}
@@ -167,8 +167,8 @@ export default function BulkInput({ onSubmit, onClose }: BulkInputProps) {
           disabled={!canSubmit}
           className="rounded-lg px-4 py-2 text-[13px] font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           style={{
-            background: canSubmit ? "#5e6ad2" : "#1a1a1a",
-            color: canSubmit ? "#fff" : "#6b6b6b",
+            background: canSubmit ? "var(--color-accent)" : "var(--color-surface-raised)",
+            color: canSubmit ? "#fff" : "var(--color-muted)",
           }}
         >
           Analyze Keywords

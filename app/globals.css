@@ -1,19 +1,69 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-background: #0a0a0a;
-  --color-foreground: #ededed;
+:root {
+  --color-bg: #f5f6fa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #eef0fa;
+  --color-surface-sunken: #eceef5;
+  --color-border: #e0e3ef;
+  --color-border-strong: #c5cad9;
+  --color-muted: #6e7491;
+  --color-muted-2: #9ba3b8;
+  --color-fg: #1a1d2e;
+  --color-accent: #5e6ad2;
+  --color-accent-hover: #4f5bc3;
+  --color-success: #16a34a;
+  --color-warning: #b45309;
+  --color-danger: #dc2626;
+  --color-error-bg: #fff1f2;
+  --color-error-border: #fecdd3;
+  --color-row-hover: #eef0fa;
+  --color-difficulty-track: #e5e7eb;
+  --color-progress-track: #e5e7eb;
+  --color-intent-info-bg: rgba(37, 99, 235, 0.07);
+  --color-intent-info-text: #2563eb;
+  --color-intent-commercial-bg: rgba(180, 83, 9, 0.07);
+  --color-intent-commercial-text: #b45309;
+  --color-intent-trans-bg: rgba(22, 163, 74, 0.07);
+  --color-intent-trans-text: #16a34a;
+  --color-intent-nav-bg: rgba(124, 58, 237, 0.07);
+  --color-intent-nav-text: #7c3aed;
+  --gradient-overlay-start: rgba(245, 246, 250, 0);
+  --gradient-overlay-mid: rgba(245, 246, 250, 0.82);
+  --gradient-overlay-end: rgba(245, 246, 250, 0.96);
+}
+
+.dark {
+  --color-bg: #0a0a0a;
   --color-surface: #111111;
   --color-surface-raised: #1a1a1a;
+  --color-surface-sunken: #0e0e0e;
   --color-border: #252525;
-  --color-border-hover: #353535;
+  --color-border-strong: #353535;
   --color-muted: #6b6b6b;
+  --color-muted-2: #4a4a4a;
+  --color-fg: #ededed;
   --color-accent: #5e6ad2;
   --color-accent-hover: #6b77e0;
   --color-success: #4caf6e;
   --color-warning: #e5a430;
   --color-danger: #e5534b;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --color-error-bg: #1a0f0f;
+  --color-error-border: #3a1f1f;
+  --color-row-hover: #161616;
+  --color-difficulty-track: #1f1f1f;
+  --color-progress-track: #1f1f1f;
+  --color-intent-info-bg: rgba(30, 58, 95, 0.13);
+  --color-intent-info-text: #5b9bd5;
+  --color-intent-commercial-bg: rgba(58, 42, 0, 0.13);
+  --color-intent-commercial-text: #e5a430;
+  --color-intent-trans-bg: rgba(30, 58, 30, 0.13);
+  --color-intent-trans-text: #4caf6e;
+  --color-intent-nav-bg: rgba(42, 30, 58, 0.13);
+  --color-intent-nav-text: #a78bfa;
+  --gradient-overlay-start: rgba(10, 10, 10, 0);
+  --gradient-overlay-mid: rgba(10, 10, 10, 0.82);
+  --gradient-overlay-end: rgba(10, 10, 10, 0.96);
 }
 
 * {
@@ -22,16 +72,17 @@
 
 html,
 body {
-  background: #0a0a0a;
-  color: #ededed;
+  background: var(--color-bg);
+  color: var(--color-fg);
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 ::selection {
   background: #5e6ad233;
-  color: #ededed;
+  color: var(--color-fg);
 }
 
 ::-webkit-scrollbar {
@@ -41,9 +92,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #252525;
+  background: var(--color-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #353535;
+  background: var(--color-border-strong);
 }
