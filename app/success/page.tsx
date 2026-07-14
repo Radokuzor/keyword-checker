@@ -66,7 +66,7 @@ function SuccessContent() {
             <p className="mt-2 text-[14px] text-[#6b6b6b]">{planLabel} unlocked</p>
           )}
           <p className="mt-4 text-[13px] text-[#3a3a3a]">
-            Redirecting you back to KeywordIQ…
+            Redirecting you back to Rank Number 1…
           </p>
         </div>
       )}

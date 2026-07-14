@@ -17,22 +17,22 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "KeywordIQ — Instant Keyword Intelligence",
+  title: "Rank Number 1 — Rank Number 1 Faster",
   description:
     "Enter any keyword and instantly get difficulty score, monthly search volume, intent, CPC, and a step-by-step ranking plan. AI-powered keyword research.",
   keywords: ["keyword research", "SEO tool", "keyword difficulty", "search volume", "keyword analysis"],
-  authors: [{ name: "KeywordIQ" }],
+  authors: [{ name: "Rank Number 1" }],
   openGraph: {
     type: "website",
-    siteName: "KeywordIQ",
-    title: "KeywordIQ — Instant Keyword Intelligence",
+    siteName: "Rank Number 1",
+    title: "Rank Number 1 — Rank Number 1 Faster",
     description:
       "AI-powered keyword research. Difficulty, volume, intent, CPC, and a ranking action plan — instantly.",
     url: process.env.NEXT_PUBLIC_BASE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "KeywordIQ — Instant Keyword Intelligence",
+    title: "Rank Number 1 — Rank Number 1 Faster",
     description:
       "AI-powered keyword research. Difficulty, volume, intent, CPC, and a ranking action plan — instantly.",
   },

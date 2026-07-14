@@ -316,7 +316,7 @@ async function handleSignOut() {
             </svg>
           </div>
           <span className="text-[14px] font-semibold text-[var(--color-fg)] tracking-tight">
-            KeywordIQ
+            Rank Number 1
           </span>
         </div>
 
@@ -401,9 +401,9 @@ async function handleSignOut() {
         {!data && !urlData && !isLoading && !bulkMode && (
           <div className="mb-10 text-center">
             <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-tight text-[var(--color-fg)] leading-tight">
-              Keyword intelligence,
+              Rank Number 1,
               <br />
-              <span className="text-[var(--color-muted)]">instantly.</span>
+              <span className="text-[var(--color-muted)]">Faster.</span>
             </h1>
             <p className="mt-3 text-[15px] text-[var(--color-muted)] max-w-md mx-auto">
               Enter a keyword for search metrics, or paste a URL to see traffic,
