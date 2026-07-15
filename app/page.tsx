@@ -9,6 +9,7 @@ import UrlCards from "@/components/UrlCards";
 import RecommendedKeywords from "@/components/RecommendedKeywords";
 import RelatedSites from "@/components/RelatedSites";
 import AuthModal from "@/components/AuthModal";
+import PaywallOverlay from "@/components/PaywallOverlay";
 import ArticleCard, { type Article } from "@/components/ArticleCard";
 import ArticleGenerating, { CyclingLoader } from "@/components/ArticleGenerating";
 import { useTheme } from "@/components/ThemeProvider";
@@ -56,6 +57,22 @@ export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
+
+  // Paywall
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallMinPlanId, setPaywallMinPlanId] = useState<"pro" | "unlimited">("pro");
+  const [paywallFeature, setPaywallFeature] = useState<string | undefined>(undefined);
+  const [paywallLoading, setPaywallLoading] = useState(false);
+
+  // Plan gates (DB ids: "pro"=Starter display, "unlimited"=Pro display, "starter"=Unlimited display)
+  const hasStarterPlan = plan === "pro" || plan === "unlimited" || plan === "starter";
+  const hasProPlan = plan === "unlimited" || plan === "starter";
+
+  function openPaywall(minPlanId: "pro" | "unlimited", feature: string) {
+    setPaywallMinPlanId(minPlanId);
+    setPaywallFeature(feature);
+    setShowPaywall(true);
+  }
 
 const fetchCredits = useCallback(async (email: string) => {
     try {
@@ -106,37 +123,64 @@ const fetchCredits = useCallback(async (email: string) => {
       const email = sess?.user?.email;
       if (email) {
         setStoredEmail(email);
-        fetchCredits(email);
         fetchPendingArticle(email);
-        // Execute any pending track that was blocked by auth
-        setPendingTrackUrl((pending) => {
-          if (pending) {
-            setTrackState("saving");
-            fetch("/api/track-url", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ url: pending, email }),
-            }).then(() => {
-              setTrackedSites((prev) => new Set(prev).add(pending));
-              setTrackState("saved");
-            }).catch(() => setTrackState("idle"));
-          }
-          return null;
-        });
-        setPendingTrackKeyword((pending) => {
-          if (pending) {
-            setKwTrackState("saving");
-            fetch("/api/track-keyword", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ keyword: pending, email }),
-            }).then(() => {
-              setTrackedKeywords((prev) => new Set(prev).add(pending));
-              setKwTrackState("saved");
-            }).catch(() => setKwTrackState("idle"));
-          }
-          return null;
-        });
+        // Fetch plan first, then resolve any pending tracked actions
+        fetch(`/api/credits?email=${encodeURIComponent(email)}`)
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
+          .then((body) => {
+            const userPlan: string | null = body.plan ?? null;
+            setCredits(body.credits ?? 0);
+            setPlan(userPlan);
+            const userHasStarter = userPlan === "pro" || userPlan === "unlimited" || userPlan === "starter";
+            const userHasPro = userPlan === "unlimited" || userPlan === "starter";
+
+            setPendingTrackKeyword((pending) => {
+              if (pending) {
+                if (!userHasStarter) {
+                  setPaywallMinPlanId("pro");
+                  setPaywallFeature("Save keywords to track your rankings over time");
+                  setShowPaywall(true);
+                } else {
+                  setKwTrackState("saving");
+                  fetch("/api/track-keyword", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ keyword: pending, email }),
+                  }).then(() => {
+                    setTrackedKeywords((prev) => new Set(prev).add(pending));
+                    setKwTrackState("saved");
+                  }).catch(() => setKwTrackState("idle"));
+                }
+              }
+              return null;
+            });
+
+            setPendingTrackUrl((pending) => {
+              if (pending) {
+                if (!userHasPro) {
+                  setPaywallMinPlanId("unlimited");
+                  setPaywallFeature("Save websites to get notified when their rankings change");
+                  setShowPaywall(true);
+                } else {
+                  setTrackState("saving");
+                  fetch("/api/track-url", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url: pending, email }),
+                  }).then(() => {
+                    setTrackedSites((prev) => new Set(prev).add(pending));
+                    setTrackState("saved");
+                  }).catch(() => setTrackState("idle"));
+                }
+              }
+              return null;
+            });
+          })
+          .catch(() => {
+            fetchCredits(email);
+            setPendingTrackKeyword(null);
+            setPendingTrackUrl(null);
+          });
       } else if (!sess) {
         setCredits(null);
         setPlan(null);
@@ -216,6 +260,25 @@ async function handleSignOut() {
     setCredits(null);
   }
 
+  async function handleSelectPlan(planId: string) {
+    setPaywallLoading(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      if (res.ok) {
+        const { url } = await res.json();
+        window.location.href = url;
+      }
+    } catch {
+      // silent
+    } finally {
+      setPaywallLoading(false);
+    }
+  }
+
   async function generateArticle(keyword: string, advice: string, email?: string) {
     setIsGeneratingArticle(true);
     try {
@@ -237,9 +300,15 @@ async function handleSignOut() {
 
   function handleCreateArticle() {
     if (!data) return;
-    const { keyword, cta } = data;
-    const email = session?.user?.email ?? undefined;
-    generateArticle(keyword, cta.advice, email);
+    if (!session?.user?.email) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (!hasStarterPlan) {
+      openPaywall("pro", "Generate articles from your keyword research");
+      return;
+    }
+    generateArticle(data.keyword, data.cta.advice, session.user.email);
   }
 
   async function trackKeyword(keyword: string) {
@@ -247,6 +316,10 @@ async function handleSignOut() {
     if (!email) {
       setPendingTrackKeyword(keyword);
       setShowAuthModal(true);
+      return;
+    }
+    if (!hasStarterPlan) {
+      openPaywall("pro", "Save keywords to track your rankings over time");
       return;
     }
     setKwTrackState("saving");
@@ -268,6 +341,10 @@ async function handleSignOut() {
     if (!email) {
       setPendingTrackUrl(url);
       setShowAuthModal(true);
+      return;
+    }
+    if (!hasProPlan) {
+      openPaywall("unlimited", "Save websites to get notified when their rankings change");
       return;
     }
     setTrackState("saving");
@@ -401,9 +478,9 @@ async function handleSignOut() {
         {!data && !urlData && !isLoading && !bulkMode && (
           <div className="mb-10 text-center">
             <h1 className="text-[32px] sm:text-[40px] font-semibold tracking-tight text-[var(--color-fg)] leading-tight">
-              Rank Number 1,
+              Rank Number 1
               <br />
-              <span className="text-[var(--color-muted)]">Faster.</span>
+              <span className="text-[var(--color-muted)]">Faster</span>
             </h1>
             <p className="mt-3 text-[15px] text-[var(--color-muted)] max-w-md mx-auto">
               Enter a keyword for search metrics, or paste a URL to see traffic,
@@ -569,6 +646,17 @@ async function handleSignOut() {
           Rank Number 1
         </p>
       </footer>
+
+      {/* Paywall modal */}
+      {showPaywall && (
+        <PaywallOverlay
+          minPlanId={paywallMinPlanId}
+          feature={paywallFeature}
+          isLoading={paywallLoading}
+          onSelectPlan={handleSelectPlan}
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
 
       {/* Auth modal */}
       {showAuthModal && (
