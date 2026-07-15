@@ -400,12 +400,18 @@ async function handleSignOut() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Blog link — always visible */}
+          {/* Nav links — always visible */}
           <a
             href="/blog"
-            className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors px-1"
+            className="text-[12px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors px-1"
           >
             Blog
+          </a>
+          <a
+            href="/about"
+            className="text-[12px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors px-1"
+          >
+            About
           </a>
 
           {session ? (
@@ -496,12 +502,7 @@ async function handleSignOut() {
               Enter a keyword for search metrics, or paste a URL to see traffic,
               authority, competitors, and ranking opportunities.
             </p>
-            <a
-              href="/blog"
-              className="mt-4 inline-block text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
-            >
-              Read our SEO guides for small businesses →
-            </a>
+           
           </div>
         )}
 
