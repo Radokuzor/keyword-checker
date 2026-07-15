@@ -4,12 +4,12 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About FourthWatch Tech — The Story Behind Rank Number 1",
   description:
-    "FourthWatch Tech was built by an entrepreneur who spent years mastering SEO and got tired of paying hundreds of dollars a month just to do basic keyword research.",
+    "I'm Rad, founder of FourthWatch Tech. I spent years mastering SEO and got tired of paying hundreds a month just to research keywords — so I built Rank Number 1.",
   openGraph: {
     type: "website",
     title: "About FourthWatch Tech — Rank Number 1",
     description:
-      "The story behind Rank Number 1: an entrepreneur who mastered SEO and built the tool he always wished existed.",
+      "I'm Rad, founder of FourthWatch Tech. I mastered SEO the hard way and built the tool I always wished existed.",
   },
   alternates: {
     canonical: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/about`,
@@ -24,7 +24,7 @@ const aboutJsonLd = {
   url: `${base}/about`,
   name: "About FourthWatch Tech — Rank Number 1",
   description:
-    "FourthWatch Tech was built by an entrepreneur who mastered SEO and was tired of paying $100+/month for tools that were overbuilt for small businesses.",
+    "Founded by Rad, owner of FourthWatch Tech. He mastered SEO and was tired of paying $100+/month for tools that were overbuilt for small businesses.",
   mainEntity: {
     "@type": "Organization",
     name: "FourthWatch Tech",
@@ -96,7 +96,7 @@ export default function AboutPage() {
 
           {/* Headline */}
           <h1 className="text-[30px] sm:text-[38px] font-semibold text-[var(--color-fg)] leading-snug tracking-tight mb-6">
-            Built by someone who was sick of paying $130/month just to research keywords.
+            I got tired of paying $130/month just to look up a keyword. So I built something better.
           </h1>
 
           {/* Divider */}
@@ -105,36 +105,32 @@ export default function AboutPage() {
           {/* Story */}
           <div className="space-y-5 text-[15px] text-[var(--color-muted)] leading-relaxed">
             <p>
-              FourthWatch Tech was founded by an entrepreneur who spent years building businesses online — and years learning SEO the hard way.
+              Hey — I'm Rad, the founder of FourthWatch Tech. I've spent years building businesses online, and for most of that time, SEO was the channel that moved the needle the most. But I didn't learn it from a course or an agency. I learned it the hard way.
             </p>
 
             <p>
-              He didn't take a course. He didn't hire an agency. He sat with browser tabs open at midnight, reading documentation, testing theories, watching what Google rewarded and punished. He learned which metrics actually predicted whether a page would rank, which keyword structures converted visitors into customers, and which tactics wasted months of effort for zero results.
+              I had browser tabs open at midnight, reading documentation, running tests, watching what Google rewarded and punished. Slowly, I figured out which metrics actually predicted whether a page would rank, which keyword patterns brought in buyers instead of browsers, and which tactics ate months of effort for zero return.
             </p>
 
             <p>
-              Eventually, he got genuinely good at it. His sites ranked. His businesses grew through organic search. And then he hit a problem he couldn't get past: to do his keyword research properly, he had to pay Semrush $130 a month. Or Ahrefs $99. Tools built for agencies with 30 clients — when he just needed to look up a keyword.
+              Eventually, I got good at it. My sites ranked. Traffic came in without paying for ads. And then I ran into a wall I couldn't ignore: every time I wanted to research a keyword properly, I had to open Semrush at $130/month or Ahrefs at $99/month. Tools built for agencies managing 30 client websites — when I just needed to check if a keyword was worth targeting.
             </p>
 
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-5 my-8">
               <p className="text-[16px] font-medium text-[var(--color-fg)] leading-relaxed">
-                "I kept asking myself why there was no tool that just gave you the data you needed, without the $100+ monthly subscription. The answer was that nobody had built it for people like me."
+                "I kept asking myself why there was no tool that just gave you the data you actually needed, without the $100+ monthly subscription. Eventually I realized the answer was that nobody had built it for people like me — so I did."
               </p>
               <p className="mt-3 text-[13px] text-[var(--color-muted)]">
-                — Founder, FourthWatch Tech
+                — Rad, Founder of FourthWatch Tech
               </p>
             </div>
 
             <p>
-              So he built it.
+              That's how Rank Number 1 was born. Enter any keyword and instantly get what actually matters: difficulty score, monthly search volume, search intent, cost per click, and a concrete step-by-step ranking plan — generated by AI, grounded in real ranking patterns. No bloated dashboards. No features you'll never use. No subscription draining your account every month whether you log in or not.
             </p>
 
             <p>
-              Rank Number 1 is the tool he always wanted. Enter any keyword and instantly get what actually matters: the difficulty score, monthly search volume, search intent, cost per click, and a concrete step-by-step plan for ranking — all generated by AI trained on real ranking patterns. No bloated dashboards. No features you'll never use. No monthly subscription that drains your account whether you use it or not.
-            </p>
-
-            <p>
-              FourthWatch Tech is built on the belief that SEO intelligence shouldn't be locked behind enterprise pricing. A bakery owner in Denver, a freelance consultant in Chicago, a boutique founder in Atlanta — they all deserve access to the same data that big brands use to dominate search results. The playing field should be level. It isn't — yet. That's what we're fixing.
+              I built FourthWatch Tech around one belief: SEO intelligence shouldn't require an enterprise budget. A bakery owner in Denver, a freelance consultant in Chicago, a boutique founder in Atlanta — they all deserve access to the same data that big brands use to dominate search results. The playing field should be level. It isn't yet. That's what I'm fixing.
             </p>
           </div>
 
@@ -143,7 +139,7 @@ export default function AboutPage() {
             {[
               {
                 title: "Built for builders",
-                body: "We made this for the people actually doing the work — not for agencies billing it out at $200/hour.",
+                body: "I made this for the people actually doing the work — not for agencies billing it out at $200/hour.",
               },
               {
                 title: "Pay for what you use",
@@ -151,7 +147,7 @@ export default function AboutPage() {
               },
               {
                 title: "Honest data",
-                body: "We show you the real difficulty, not an inflated number designed to make you feel like you need more features.",
+                body: "I show you the real difficulty, not an inflated number designed to make you feel like you need more features.",
               },
             ].map((v) => (
               <div
@@ -182,6 +178,26 @@ export default function AboutPage() {
             >
               Try Rank Number 1 Free
             </Link>
+          </div>
+
+          {/* Contact */}
+          <div className="mt-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-6">
+            <h2 className="text-[16px] font-semibold text-[var(--color-fg)] mb-1">
+              Get in touch
+            </h2>
+            <p className="text-[14px] text-[var(--color-muted)] leading-relaxed mb-4">
+              Questions, feedback, or partnership ideas — I read every email personally.
+            </p>
+            <a
+              href="mailto:admin@fourthwatchtech.com"
+              className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M1 5l7 5 7-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              admin@fourthwatchtech.com
+            </a>
           </div>
         </div>
       </main>

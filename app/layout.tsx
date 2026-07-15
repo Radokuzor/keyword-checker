@@ -119,6 +119,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full`}>
       <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18324288844" />
+        <script dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','AW-18324288844');` }} />
         <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('kiq_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}` }} />
         <script
           type="application/ld+json"
