@@ -299,7 +299,7 @@ async function handleSignOut() {
   }
 
   function handleCreateArticle() {
-    if (!data) return;
+    if (!data && !urlData) return;
     if (!session?.user?.email) {
       setShowAuthModal(true);
       return;
@@ -308,7 +308,9 @@ async function handleSignOut() {
       openPaywall("pro", "Generate articles from your keyword research");
       return;
     }
-    generateArticle(data.keyword, data.cta.advice, session.user.email);
+    const keyword = data ? data.keyword : urlData!.url;
+    const advice = data ? data.cta.advice : urlData!.cta.advice;
+    generateArticle(keyword, advice, session.user.email);
   }
 
   async function trackKeyword(keyword: string) {
@@ -398,6 +400,14 @@ async function handleSignOut() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Blog link — always visible */}
+          <a
+            href="/blog"
+            className="flex items-center gap-1.5 text-[12px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors px-1"
+          >
+            Blog
+          </a>
+
           {session ? (
             <>
               <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-muted)]">
@@ -486,6 +496,12 @@ async function handleSignOut() {
               Enter a keyword for search metrics, or paste a URL to see traffic,
               authority, competitors, and ranking opportunities.
             </p>
+            <a
+              href="/blog"
+              className="mt-4 inline-block text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
+            >
+              Read our SEO guides for small businesses →
+            </a>
           </div>
         )}
 
@@ -642,9 +658,17 @@ async function handleSignOut() {
 
       {/* Footer */}
       <footer className="border-t border-[var(--color-border)] px-6 py-4">
-        <p className="text-center text-[12px] text-[var(--color-muted)]">
-          Rank Number 1
-        </p>
+        <div className="flex items-center justify-center gap-4 text-[12px] text-[var(--color-muted)]">
+          <span>Rank Number 1</span>
+          <span>·</span>
+          <a href="/blog" className="hover:text-[var(--color-fg)] transition-colors">
+            Blog
+          </a>
+          <span>·</span>
+          <a href="/about" className="hover:text-[var(--color-fg)] transition-colors">
+            About
+          </a>
+        </div>
       </footer>
 
       {/* Paywall modal */}

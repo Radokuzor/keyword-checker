@@ -1,0 +1,53 @@
+# Rank Number 1 — by FourthWatch Tech
+
+> AI-powered keyword research tool built for small business owners. Enter any keyword or URL and instantly get difficulty score, monthly search volume, search intent, cost per click, and a step-by-step AI-generated ranking plan. No monthly subscription — pay per use.
+
+## What This Site Does
+
+Rank Number 1 is a keyword research and SEO intelligence tool that helps small business owners, bloggers, and entrepreneurs rank higher on Google without paying for expensive enterprise SEO tools like Semrush or Ahrefs.
+
+Core capabilities:
+- Keyword analysis: difficulty (0–100), monthly search volume, search intent (informational/commercial/transactional/navigational), and CPC
+- AI-generated ranking plan: specific, actionable steps tailored to the keyword
+- URL analysis: paste any competitor URL to see estimated organic traffic, domain authority, top keywords, and content gaps
+- Bulk keyword mode: analyze multiple keywords in one session
+- Article generation: create SEO-optimized draft articles from keyword research
+
+## Pricing
+
+One-time credit purchases (no subscription, credits do not expire):
+- Starter: $5 for 20 keyword credits
+- Pro: $12.99 for 100 keyword credits
+- Unlimited: $25 for 500 keyword credits
+
+## Company
+
+FourthWatch Tech — founded by an entrepreneur who mastered SEO and built the tool he always wished existed. Based on the belief that SEO intelligence should not require a $100+/month subscription.
+
+## Key Pages
+
+- [Homepage](https://ranknumber1.com/): The keyword research tool — enter a keyword or URL to analyze
+- [Blog](https://ranknumber1.com/blog): SEO guides and keyword research tips for small business owners
+- [About](https://ranknumber1.com/about): The story behind FourthWatch Tech and Rank Number 1
+
+## Blog Articles
+
+- [Why SEO Tools Cost Too Much for Small Businesses](https://ranknumber1.com/blog/small-business-seo-tools-too-expensive): Compares Semrush, Ahrefs, and Rank Number 1 on price and features
+- [How to Rank on Page 1 of Google Without an SEO Agency](https://ranknumber1.com/blog/rank-page-1-google-without-agency): Step-by-step guide for small business owners
+- [Semrush vs Ahrefs vs Rank Number 1](https://ranknumber1.com/blog/semrush-vs-ahrefs-vs-rank-number-1): Honest feature and price comparison for small businesses
+- [The Small Business Owner's Complete Keyword Research Guide](https://ranknumber1.com/blog/keyword-research-guide-small-business): How to find and target the right keywords
+- [5 Keyword Research Mistakes That Kill Your Rankings](https://ranknumber1.com/blog/keyword-research-mistakes-killing-rankings): Common errors and how to fix them
+- [How to Get More Customers from Google Without Paying for Ads](https://ranknumber1.com/blog/get-customers-google-without-ads): Organic SEO strategy for small businesses
+- [Local SEO for Small Businesses](https://ranknumber1.com/blog/local-seo-small-business-guide): How to rank in Google Maps and local search
+
+## Target Audience
+
+Small business owners, solopreneurs, local service providers, bloggers, freelancers, and early-stage startups who want to rank on Google without an agency or enterprise-priced tools.
+
+## Technical Notes
+
+- Built with Next.js (App Router)
+- Keyword data powered by AI analysis
+- Authentication via Supabase magic link (email OTP)
+- Payments via Stripe (one-time purchases)
+- Sitemap: https://ranknumber1.com/sitemap.xml
