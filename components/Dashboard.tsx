@@ -56,7 +56,7 @@ export default function Dashboard({ email, credits, plan, onClose, onSignOut, on
   const tableRow = "border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-row-hover)] transition-colors cursor-pointer";
   const tableCell = "px-4 py-3 text-[13px]";
 
-  const planLabel = plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "Free";
+  const planLabel = plan === "pro" ? "Starter" : plan === "unlimited" ? "Pro" : plan === "starter" ? "Unlimited" : plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "Free user";
 
   return (
     <>

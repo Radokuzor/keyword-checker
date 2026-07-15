@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const PLAN_CREDITS: Record<string, number> = {
-  starter: 500,
   pro: 5000,
   unlimited: 999999,
+  starter: 999999,
 };
 
 const PRICE_IDS: Record<string, string> = {

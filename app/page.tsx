@@ -323,16 +323,16 @@ async function handleSignOut() {
         <div className="flex items-center gap-3">
           {session ? (
             <>
-              {credits !== null && (
-                <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-muted)]">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      credits > 0 ? "bg-[var(--color-success)]" : "bg-[var(--color-danger)]"
-                    }`}
-                  />
-                  {credits} credit{credits !== 1 ? "s" : ""} remaining
-                </div>
-              )}
+              <div className="flex items-center gap-1.5 text-[12px] text-[var(--color-muted)]">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    plan ? "bg-[var(--color-success)]" : "bg-[var(--color-muted)]"
+                  }`}
+                />
+                {plan
+                  ? plan === "pro" ? "Starter" : plan === "unlimited" ? "Pro" : plan === "starter" ? "Unlimited" : plan.charAt(0).toUpperCase() + plan.slice(1)
+                  : "Free user"}
+              </div>
               <button
                 onClick={() => setShowDashboard((v) => !v)}
                 className="flex items-center gap-1.5 text-[12px] font-medium border border-[var(--color-border)] rounded-lg px-3 py-1.5 transition-colors"

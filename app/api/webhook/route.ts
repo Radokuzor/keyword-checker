@@ -5,9 +5,9 @@ import { supabase } from "@/lib/supabase";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 const PLAN_CREDITS: Record<string, number> = {
-  starter: 500,
   pro: 5000,
   unlimited: 999999,
+  starter: 999999,
 };
 
 async function upsertCredits(email: string, planId: string, credits: number) {

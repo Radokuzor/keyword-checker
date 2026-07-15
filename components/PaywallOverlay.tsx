@@ -11,26 +11,26 @@ interface Plan {
 
 const PLANS: Plan[] = [
   {
-    id: "starter",
-    name: "Starter",
-    price: "$5.99",
-    searches: "500 searches",
-    note: "per month",
-  },
-  {
     id: "pro",
-    name: "Pro",
+    name: "Starter",
     price: "$15.99",
     searches: "5,000 searches",
     note: "per month",
-    highlighted: true,
   },
   {
     id: "unlimited",
-    name: "Unlimited",
+    name: "Pro",
     price: "$25.99",
     searches: "Unlimited",
     note: "1,000/day · per month",
+    highlighted: true,
+  },
+  {
+    id: "starter",
+    name: "Unlimited",
+    price: "$29.99",
+    searches: "Unlimited",
+    note: "per month",
   },
 ];
 
