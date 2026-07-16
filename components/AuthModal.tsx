@@ -59,12 +59,15 @@ export default function AuthModal({ onClose, anonId, onEmailSent }: AuthModalPro
                 <rect x="1" y="5" width="20" height="14" rx="2" stroke="#5e6ad2" strokeWidth="1.5" />
               </svg>
             </div>
-            <h2 className="text-[17px] font-semibold text-[var(--color-fg)]">Check your inbox</h2>
+            <h2 className="text-[17px] font-semibold text-[var(--color-fg)]">Check your inbox/spam</h2>
             <p className="mt-2 text-[13px] text-[var(--color-muted)] leading-relaxed">
-              We sent a sign-in link to{" "}
+              Rank Number 1 sent a sign-in link to{" "}
               <span className="text-[var(--color-fg)]">{email}</span>.
               <br />
-              Click it to sign in — no password needed.
+              Click it to sign in.
+            </p>
+            <p className="mt-3 rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-3 py-2 text-[12px] font-medium text-[var(--color-warning)] leading-relaxed">
+              Don&apos;t see it? Check your <span className="underline underline-offset-2">spam folder</span> — it can land there.
             </p>
             <button
               onClick={onClose}

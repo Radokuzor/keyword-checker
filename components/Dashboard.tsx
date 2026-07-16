@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { planLabel } from "@/lib/planLabels";
 
 interface TrackedUrl {
   url: string;
@@ -56,7 +57,7 @@ export default function Dashboard({ email, credits, plan, onClose, onSignOut, on
   const tableRow = "border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-row-hover)] transition-colors cursor-pointer";
   const tableCell = "px-4 py-3 text-[13px]";
 
-  const planLabel = plan === "pro" ? "Starter" : plan === "unlimited" ? "Pro" : plan === "starter" ? "Unlimited" : plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "Free user";
+  const planLabelText = planLabel(plan);
 
   return (
     <>
@@ -189,7 +190,7 @@ export default function Dashboard({ email, credits, plan, onClose, onSignOut, on
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
                   <span className="text-[12px] text-[var(--color-muted)]">Plan</span>
                   <span className="rounded-full bg-[#5e6ad215] px-2.5 py-1 text-[12px] font-medium text-[var(--color-accent)]">
-                    {planLabel}
+                    {planLabelText}
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
